@@ -3,4 +3,4 @@ project(checkers)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(checkers main.cpp Player.cpp CheckersController.cpp board.cpp)
+add_executable(checkers main.cpp CheckersController.cpp board.cpp AI.cpp)

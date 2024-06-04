@@ -19,6 +19,54 @@ Board::Board() {
         }
     }
 }
+Color Board::getFieldColor(int x, int y) const{
+    return board[x][y].color;
+}
+bool Board::getIfQueen(int x, int y) const{
+    return board[x][y].isQueen;
+}
+Checker Board::getChecker(int x, int y) const {
+    return board[x][y];
+}
+bool Board::hasChecker(int x, int y) const{
+    if(board[x][y].color!=Color::NONE){
+        return true;
+    }
+    return false;
+}
+bool Board::isSafe(int x, int y, Color color) const {
+    static const int dx[] = { -1, -1, 1, 1 };
+    static const int dy[] = { -1, 1, -1, 1 };
+    static const int captureDx[] = { -2, -2, 2, 2 };
+    static const int captureDy[] = { -2, 2, -2, 2 };
+
+    // Sprawdź, czy na polu (x, y) znajduje się pionek o podanym kolorze
+    if (!hasChecker(x, y) || getChecker(x, y).color != color) {
+        return true; // Jeśli nie ma pionka lub jest innego koloru, jest bezpieczny (nie ma pionka do przejęcia)
+    }
+
+    // Sprawdź, czy przeciwnik może zbić pionek
+    Color opponentColor = (color == Color::WHITE) ? Color::BLACK : Color::WHITE;
+
+    for (int i = 0; i < 4; ++i) {
+        int overX = x + dx[i];
+        int overY = y + dy[i];
+        int toX = x + captureDx[i];
+        int toY = y + captureDy[i];
+        Coordinates cor_sf = {{x,y},{toX, toY}};
+        // Sprawdź, czy przeciwnik może przeskoczyć (x, y)
+        if (isMoveValid(overX, overY, toX, toY) && hasChecker(overX, overY)) {
+            Checker overChecker = getChecker(overX, overY);
+
+            if (overChecker.color == opponentColor && canCapture(cor_sf)) {
+                return false; // Pionek nie jest bezpieczny, przeciwnik może go zbić
+            }
+        }
+    }
+
+    return true; // Pionek jest bezpieczny
+}
+
 bool Board::isMoveValid(int fromX, int fromY, int toX, int toY) const {
     if (toX < 0 || toX >= BOARD_SIZE || toY < 0 || toY >= BOARD_SIZE) {
         return false;
@@ -69,8 +117,8 @@ Coordinates Board::changeCoordinates(int from, int to) {
     }
     return cor;
 }
-bool Board::moveChecker(int from, int to) {
-    Coordinates move_cor = changeCoordinates(from, to);
+bool Board::moveChecker(Coordinates move_cor) {
+    //Coordinates move_cor = changeCoordinates(from, to);
     if (!isMoveValid(move_cor.from.X, move_cor.from.Y, move_cor.to.X, move_cor.to.Y)) {
         return false;
     }
@@ -97,7 +145,10 @@ bool Board::QueenCheck(Coordinates cor_que) {
     //////////////////////////////////////////////////////////////
 }
 bool Board::canCapture(Coordinates cor) const {
-    if (cor.from.X < 0 || cor.from.X >= BOARD_SIZE || cor.to.Y < 0 || cor.to.Y >= BOARD_SIZE) {
+    if (cor.from.X < 0 || cor.from.X >= BOARD_SIZE || cor.from.Y < 0 || cor.from.Y >= BOARD_SIZE) {
+        return false;
+    }
+    if (cor.to.X < 0 || cor.to.X >= BOARD_SIZE || cor.to.Y < 0 || cor.to.Y >= BOARD_SIZE) {
         return false;
     }
     if((cor.from.X+cor.from.Y)%2 == 0){
@@ -116,19 +167,19 @@ bool Board::canCapture(Coordinates cor) const {
     if (board[midX][midY].color == Color::NONE || board[midX][midY].color == board[cor.from.X][cor.from.Y].color) {
         return false;
     }
-    if(board[cor.to.X][cor.to.Y].color==Color::BLACK && !board[cor.to.X][cor.to.Y].isQueen && cor.to.X > cor.from.X){
+    if(board[cor.to.X][cor.to.Y].color==Color::BLACK && !board[cor.from.X][cor.from.Y].isQueen && cor.to.X >= cor.from.X){
         return false;
     }
-    if(board[cor.to.X][cor.to.Y].color==Color::WHITE && !board[cor.to.X][cor.to.Y].isQueen && cor.to.X < cor.from.X){
+    if(board[cor.to.X][cor.to.Y].color==Color::WHITE && !board[cor.from.X][cor.from.Y].isQueen && cor.to.X <= cor.from.X){
         return false;
     }
 
 
     return true;
 }
-bool Board::Capture(int from , int to) {
+bool Board::Capture(Coordinates capt_cor) {
     Position captured;
-    Coordinates capt_cor = changeCoordinates(from, to);
+    //Coordinates capt_cor = changeCoordinates(from, to);
     if(!canCapture(capt_cor)){
         return false;
     }
@@ -158,28 +209,23 @@ void Board::display() const {
                     std::cout << field << "* ";
                     field++;
                 }
-            }
-            else if (board[i][j].color == Color::WHITE) {
-                std::cout << field << "W ";
-                field++;
-            }
-            else if (board[i][j].color == Color::BLACK) {
-                std::cout << field << "B ";
-                field++;
-            }
-            else if(board[i][j].isQueen && board[i][j].color == Color::WHITE){
-                std::cout << field << "WQ ";
-                field++;
-            }
-            else if(board[i][j].isQueen && board[i][j].color == Color::BLACK){
-                std::cout << field << "BQ ";
-                field++;
+            } else if (board[i][j].color == Color::WHITE) {
+            std::cout << "W" << field << " ";
+            field++;
+        } else if (board[i][j].color == Color::BLACK) {
+            std::cout << "B" << field << " "; // Black color
+            field++;
+        } else if (board[i][j].isQueen && board[i][j].color == Color::WHITE) {
+            std::cout << "QW" << field << " "; // White Queen color
+            field++;
+        } else if (board[i][j].isQueen && board[i][j].color == Color::BLACK) {
+            std::cout << "QB" << field << " "; // Black Queen color
+            field++;
             } else{std::cout<<"cos nie tak\n";}
         }
         std::cout << std::endl;
     }
 }
-
 
 
 

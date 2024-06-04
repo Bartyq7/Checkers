@@ -27,17 +27,29 @@ struct Coordinates{
     Position from;
     Position to;
 };
+struct Move {
+    Coordinates mv_cor;
+    bool isCapture;
+    bool isQueen;
+};
 
+
+////////////////////////////////////////////////
 class Board {
     Checker board[BOARD_SIZE][BOARD_SIZE];
 public:
     Board();
+    Color getFieldColor(int x, int y) const;
+    bool getIfQueen(int x, int y) const;
+    Checker getChecker(int x, int y)const;
+    bool hasChecker(int x, int y) const;
+    bool isSafe(int x, int y, Color color) const;
     bool isMoveValid(int fromX, int fromY, int toX, int toY) const;
-    bool moveChecker(int from, int to);
+    bool moveChecker(Coordinates move_cor);
     Coordinates changeCoordinates(int from, int to);
     bool QueenCheck(Coordinates cor_que);
     bool canCapture(Coordinates cor) const;
-    bool Capture(int from, int to);
+    bool Capture(Coordinates capt_cor);
     void display() const;
 
 };

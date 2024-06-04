@@ -1,0 +1,29 @@
+//
+// Created by bkami on 28.05.2024.
+//
+
+#ifndef CHECKERS_AI_H
+#define CHECKERS_AI_H
+#include "board.h"
+
+const int MIN = -10000;
+const int MAX = 10000;
+const int DEPTH = 2;
+class AI {
+    Color AI_color;
+    //Checker board[BOARD_SIZE][BOARD_SIZE];
+    //Board *current_board;
+public:
+    AI(Color ai_color);
+    void get_current_board();
+    std::vector<Move> generateMoves(Board board_gen);
+    void generateMovesForChecker(int x, int y, std::vector<Move>& moves, Board board_gen) const;
+    int evaluate(Board board_ev) ;
+    //int minimax(Board& board, int depth, int alpha, int beta, bool maximizingPlayer, Color player);
+    int minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha, int beta);
+    Move findBestMove(Board board_fn);
+    int findMaxValueIndex(const std::vector<Move>& moves);
+};
+
+
+#endif //CHECKERS_AI_H
