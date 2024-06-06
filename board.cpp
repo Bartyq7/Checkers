@@ -10,10 +10,10 @@ Board::Board() {
         for (int j = 0; j < BOARD_SIZE; ++j) {
             if ((i + j) % 2 != 0) {
                 if (i < 3) {
-                    board[i][j] = Checker(Color::WHITE);
+                    board[i][j] = Checker(Color::BLACK);
                 }
                 else if (i > 4) {
-                    board[i][j] = Checker(Color::BLACK);
+                    board[i][j] = Checker(Color::WHITE);
                 }
             }
         }
@@ -22,9 +22,9 @@ Board::Board() {
 Color Board::getFieldColor(int x, int y) const{
     return board[x][y].color;
 }
-bool Board::getIfQueen(int x, int y) const{
-    return board[x][y].isQueen;
-}
+//bool Board::getIfQueen(int x, int y) const{
+//    return board[x][y].isQueen;
+//}
 Checker Board::getChecker(int x, int y) const {
     return board[x][y];
 }
@@ -34,37 +34,64 @@ bool Board::hasChecker(int x, int y) const{
     }
     return false;
 }
-bool Board::isSafe(int x, int y, Color color) const {
-    static const int dx[] = { -1, -1, 1, 1 };
-    static const int dy[] = { -1, 1, -1, 1 };
-    static const int captureDx[] = { -2, -2, 2, 2 };
-    static const int captureDy[] = { -2, 2, -2, 2 };
 
-    // Sprawdź, czy na polu (x, y) znajduje się pionek o podanym kolorze
-    if (!hasChecker(x, y) || getChecker(x, y).color != color) {
-        return true; // Jeśli nie ma pionka lub jest innego koloru, jest bezpieczny (nie ma pionka do przejęcia)
+//bool Board::isSafe(int x, int y, Color color) const {
+//    static const int dx[] = { -1, -1, 1, 1 };
+//    static const int dy[] = { -1, 1, -1, 1 };
+//    static const int captureDx[] = { -2, -2, 2, 2 };
+//    static const int captureDy[] = { -2, 2, -2, 2 };
+//
+//    // Sprawdź, czy na polu (x, y) znajduje się pionek o podanym kolorze
+//    if (!hasChecker(x, y) || getChecker(x, y).color != color) {
+//        return true; // Jeśli nie ma pionka lub jest innego koloru, jest bezpieczny (nie ma pionka do przejęcia)
+//    }
+//
+//    // Sprawdź, czy przeciwnik może zbić pionek
+//    Color opponentColor = (color == Color::WHITE) ? Color::BLACK : Color::WHITE;
+//
+//    for (int i = 0; i < 4; ++i) {
+//        int overX = x + dx[i];
+//        int overY = y + dy[i];
+//        int toX = x + captureDx[i];
+//        int toY = y + captureDy[i];
+//        Coordinates cor_sf = {{x,y},{toX, toY}};
+//        // Sprawdź, czy przeciwnik może przeskoczyć (x, y)
+//        if (isMoveValid(overX, overY, toX, toY) && hasChecker(overX, overY)) {
+//            Checker overChecker = getChecker(overX, overY);
+//
+//            if (overChecker.color == opponentColor && canCapture(cor_sf)) {
+//                return false; // Pionek nie jest bezpieczny, przeciwnik może go zbić
+//            }
+//        }
+//    }
+//
+//    return true; // Pionek jest bezpieczny
+//}
+
+void Board::generateMovesForChecker(int x, int y, std::vector<Move>& moves) {
+    static const Position directions[4] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+    static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
+
+    for (int i=0; i<4; i++) {
+        int newX = x + directions[i].X;
+        int newY = y + directions[i].Y;
+        //Coordinates cor = {{x, y}, {newX, newY}};
+        Coordinates cor = {{x,y},{newX,newY}};
+        if (isMoveValid(cor.from.X, cor.from.Y, cor.to.X, cor.to.Y)) {
+            //std::cout<<"cor from "<<cor.from.X<<cor.from.Y<<" cor to "<<cor.to.X<<cor.to.Y<<std::endl;
+            moves.push_back({cor, false});
+        }
     }
-
-    // Sprawdź, czy przeciwnik może zbić pionek
-    Color opponentColor = (color == Color::WHITE) ? Color::BLACK : Color::WHITE;
-
-    for (int i = 0; i < 4; ++i) {
-        int overX = x + dx[i];
-        int overY = y + dy[i];
-        int toX = x + captureDx[i];
-        int toY = y + captureDy[i];
-        Coordinates cor_sf = {{x,y},{toX, toY}};
-        // Sprawdź, czy przeciwnik może przeskoczyć (x, y)
-        if (isMoveValid(overX, overY, toX, toY) && hasChecker(overX, overY)) {
-            Checker overChecker = getChecker(overX, overY);
-
-            if (overChecker.color == opponentColor && canCapture(cor_sf)) {
-                return false; // Pionek nie jest bezpieczny, przeciwnik może go zbić
-            }
+    for (int i=0; i<4; i++) {
+        int newX = x + captureDirections[i].X;
+        int newY = y + captureDirections[i].Y;
+        Coordinates cor = {{x, y}, {newX, newY}};
+        if (canCapture(cor)) {
+            moves.push_back({cor, true});
         }
     }
 
-    return true; // Pionek jest bezpieczny
+    //generateMultipleCapture(x,y,moves);
 }
 
 bool Board::isMoveValid(int fromX, int fromY, int toX, int toY) const {
@@ -80,10 +107,10 @@ bool Board::isMoveValid(int fromX, int fromY, int toX, int toY) const {
     if (board[toX][toY].color != Color::NONE) {
         return false;
     }
-    if(board[fromX][fromY].color==Color::BLACK && !board[fromX][fromY].isQueen && toX > fromX){
+    if(board[fromX][fromY].color==Color::WHITE && !board[fromX][fromY].isQueen && toX > fromX){
         return false;
     }
-    if(board[fromX][fromY].color==Color::WHITE && !board[fromX][fromY].isQueen && toX < fromX){
+    if(board[fromX][fromY].color==Color::BLACK && !board[fromX][fromY].isQueen && toX < fromX){
         return false;
     }
 
@@ -167,10 +194,10 @@ bool Board::canCapture(Coordinates cor) const {
     if (board[midX][midY].color == Color::NONE || board[midX][midY].color == board[cor.from.X][cor.from.Y].color) {
         return false;
     }
-    if(board[cor.to.X][cor.to.Y].color==Color::BLACK && !board[cor.from.X][cor.from.Y].isQueen && cor.to.X >= cor.from.X){
+    if(board[cor.from.X][cor.from.Y].color==Color::WHITE && !board[cor.from.X][cor.from.Y].isQueen && cor.to.X >= cor.from.X){
         return false;
     }
-    if(board[cor.to.X][cor.to.Y].color==Color::WHITE && !board[cor.from.X][cor.from.Y].isQueen && cor.to.X <= cor.from.X){
+    if(board[cor.from.X][cor.from.Y].color==Color::BLACK && !board[cor.from.X][cor.from.Y].isQueen && cor.to.X <= cor.from.X){
         return false;
     }
 
@@ -195,6 +222,49 @@ bool Board::Capture(Coordinates capt_cor) {
 
     return true;
 }
+//void Board::generateCapturesForChecker(int x, int y, std::vector<Move>& moves) {
+//    static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
+//    for (int i=0; i<4; i++) {
+//        int newX = x + captureDirections[i].X;
+//        int newY = y + captureDirections[i].Y;
+//        std::vector<Position> cor = {{x, y}, {newX, newY}};
+//        if (canCapture(cor)) {
+//            moves.push_back({cor, true});
+//        }
+//    }
+//}
+
+//void Board::generateMultipleCapture(int x, int y, std::vector<Move>& moves){
+//    static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
+//    for (int i=0; i<4; i++) {
+//        int newX = x + captureDirections[i].X;
+//        int newY = y + captureDirections[i].Y;
+//        //Coordinates cor = {{x, y}, {newX, newY}};
+//        std::vector<Position> capt_cor = {{x,y},{newX,newY}};
+//        if(canCapture(capt_cor)){
+//            moves.push_back({capt_cor, true});
+//        }
+//        if(QueenCheck(capt_cor)){
+//            return;
+//        }
+//        std::vector<Move> moves_mult_cap;
+//        generateCapturesForChecker(capt_cor.back().X,capt_cor.back().Y, moves_mult_cap);
+//        if(!moves_mult_cap.size()){
+//            return;
+//        } else {
+//            Position current_end_moves_mult = {moves_mult_cap.front().mv_cor.back().X,
+//                                               moves_mult_cap.front().mv_cor.back().Y}; //zawsze bierzemy pierwsze mozliwe bicie wielokrotne
+//            Position old_end_moves_mult = {moves[i].mv_cor.back().X, moves[i].mv_cor.back().Y};
+//            std::vector<Position> mult_cap;// = {moves.front().mv_cor,moves_mult_cap,end_moves_mult};
+//            mult_cap.push_back({moves[i].mv_cor.front().X,moves[i].mv_cor.front().X});
+//            mult_cap.push_back(old_end_moves_mult);
+//            mult_cap.push_back(current_end_moves_mult);
+//            moves.pop_back();
+//            moves.push_back({mult_cap, true});
+//            generateMultipleCapture(current_end_moves_mult.X,current_end_moves_mult.Y,moves);
+//        }
+//    }
+//}
 
 
 void Board::display() const {
@@ -227,5 +297,50 @@ void Board::display() const {
     }
 }
 
+void Board::available_jump_sequences(Coordinates cor_cap, std::vector<Coordinates> current_sequence,
+                                     Checker temp_board[BOARD_SIZE][BOARD_SIZE],
+                                     std::vector<Coordinates> &sequences) {
+    std::vector<Move> caps = available_cap_from(, temp_board);
+    if (caps.empty()) {
+        sequences.push_back(current_sequence);
+        return;
+    }
+    //for (const Position &j : cap) {
+    for(int i=0;i<caps.size();i++){
+        Checker new_board[BOARD_SIZE][BOARD_SIZE];
+        for(int j=0;j<BOARD_SIZE;j++){
+            for (int k = 0; k < BOARD_SIZE; ++k) {
+                new_board[j][k]=temp_board[j][k];
+            }
+        }
+        Coordinates current_cor = {{from},{caps[i].mv_cor.to}};
+        cap(current_cor, new_board);
+        std::vector<Position> new_sequence = current_sequence;
+        new_sequence.push_back(caps[i].mv_cor.to);
+        available_jump_sequences(caps[i].mv_cor.to, new_sequence, new_board, sequences);
+    }
+}
+
+std::vector<Move> Board::available_cap_from(Position from, Checker temp_board[BOARD_SIZE][BOARD_SIZE]) const {
+    std::vector<Move> caps;
+    static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
+    for (int i=0; i<4; i++) {
+        int newX = from.X + captureDirections[i].X;
+        int newY = from.Y + captureDirections[i].Y;
+        Coordinates cor = {{from.X, from.Y}, {newX, newY}};
+        if (canCapture(cor)) {
+            caps.push_back({cor, true});
+        }
+    }
+    return caps;
+}
+
+void Board::cap(Coordinates &capt_cor, Checker temp_board[BOARD_SIZE][BOARD_SIZE]) {
+    int midX = (capt_cor.from.X + capt_cor.to.X) / 2;
+    int midY = (capt_cor.from.Y + capt_cor.to.Y) / 2;
+    temp_board[capt_cor.to.X][capt_cor.to.Y] = temp_board[capt_cor.from.X][capt_cor.from.Y];
+    temp_board[capt_cor.from.X][capt_cor.from.Y] = Checker();
+    temp_board[midX][midY] = Checker();
+}
 
 

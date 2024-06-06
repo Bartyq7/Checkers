@@ -16,10 +16,8 @@ class AI {
 public:
     AI(Color ai_color);
     void get_current_board();
-    std::vector<Move> generateMoves(Board board_gen);
-    void generateMovesForChecker(int x, int y, std::vector<Move>& moves, Board board_gen) const;
+    std::vector<Move> generateMoves(Board board_gen, Color color_to_gen);
     int evaluate(Board board_ev) ;
-    //int minimax(Board& board, int depth, int alpha, int beta, bool maximizingPlayer, Color player);
     int minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha, int beta);
     Move findBestMove(Board board_fn);
     int findMaxValueIndex(const std::vector<Move>& moves);

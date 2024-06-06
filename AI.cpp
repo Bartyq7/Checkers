@@ -8,19 +8,19 @@ AI::AI(Color ai_color) {
     AI_color=ai_color;
 }
 
-std::vector<Move> AI::generateMoves(Board board_gen) {
+std::vector<Move> AI::generateMoves(Board board_gen, Color color_to_gen) {
     std::vector<Move> moves;
     for (int i = 0; i < BOARD_SIZE; i++) {
         for (int j = 0; j < BOARD_SIZE; j++) {
-            if ((i + j) % 2 != 0 && board_gen.getFieldColor(i,j) == AI_color) {
-                generateMovesForChecker(i, j, moves, board_gen);
+            if ((i + j) % 2 != 0 && board_gen.getFieldColor(i,j) == color_to_gen) {
+                board_gen.generateMovesForChecker(i, j, moves);
                 //std::cout<<"i "<<i<<"j "<<j<<std::endl;
             }
         }
     }
     return moves;
 }
-
+/*
 void AI::generateMovesForChecker(int x, int y, std::vector<Move>& moves, Board board_gen) const {
     static const Position directions[4] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
     static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
@@ -43,7 +43,7 @@ void AI::generateMovesForChecker(int x, int y, std::vector<Move>& moves, Board b
             moves.push_back({cor, true,board_gen.QueenCheck(cor)});
         }
     }
-}
+}*/
 int AI::evaluate(Board board_ev){
     int score = 0;
     const int pawnValue = 1;
@@ -66,9 +66,9 @@ int AI::evaluate(Board board_ev){
                 }
 
                 // Dodaj punkty za bezpieczeństwo (czy pionek jest zagrożony przejęciem)
-                if (!board_ev.isSafe(i, j, checker.color)) {
-                    score += (checker.color == AI_color ? edgePenalty : 0);
-                }
+//                if (!board_ev.isSafe(i, j, checker.color)) {
+//                    score += (checker.color == AI_color ? edgePenalty : 0);
+//                }
             }
         }
     }
@@ -80,19 +80,18 @@ int AI::minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha,
         //newBoard.display();
         return evaluate(board_minmax);
     }
+    //Color opponent_color = (AI_color == Color::BLACK ? Color::WHITE : Color::BLACK);
+    std::vector<Move> moves = generateMoves(board_minmax, AI_color);
+    //std::vector<Move> opponent_moves = generateMoves(board_minmax, opponent_color);
 
-    std::vector<Move> moves = generateMoves(board_minmax);
     if (maximizingPlayer) {
         int best = MIN;
-
         for (int i=0; i<moves.size();i++){
-            //Board newBoard = board_minmax; // Assuming Board has a copy constructor
-            board_minmax.moveChecker(moves[i].mv_cor); // Assuming makeMove applies the move
+            board_minmax.moveChecker(moves[i].mv_cor);
             int val = minimax(board_minmax, depth - 1, false, alpha, beta);
             //std::cout<<"val "<<i<<" "<<val<<std::endl;
             best = std::max(best, val);
             alpha = std::max(alpha, best);
-
             if (beta <= alpha)
                 break;
         }
@@ -101,9 +100,7 @@ int AI::minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha,
         int best = MAX;
 
         for (int i=0; i<moves.size(); i++) {
-           //Board newBoard = board_minmax; // Assuming Board has a copy constructor
-            board_minmax.moveChecker(moves[i].mv_cor); // Assuming makeMove applies the move
-
+            board_minmax.moveChecker(moves[i].mv_cor);
             int val = minimax(board_minmax, depth - 1, true, alpha, beta);
             //std::cout<<"val "<<i<<" "<<val<<std::endl;
             //std::cout<<"best "<<i<<" "<<best<<std::endl;
@@ -118,7 +115,7 @@ int AI::minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha,
     }
 }
 Move AI::findBestMove(Board board_fn) {
-    std::vector<Move> moves = generateMoves(board_fn);
+    std::vector<Move> moves = generateMoves(board_fn, AI_color);
     int bestValue = MIN;
     Move bestMove;
     std::vector<Move> captureMoves;
