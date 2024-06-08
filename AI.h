@@ -15,12 +15,15 @@ class AI {
     //Board *current_board;
 public:
     AI(Color ai_color);
-    void get_current_board();
+    //void get_current_board();
     std::vector<Move> generateMoves(Board board_gen, Color color_to_gen);
+    std::vector<Move> generateCaptures(Board board_gen, Color color_to_gen);
     int evaluate(Board board_ev) ;
     int minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha, int beta);
     Move findBestMove(Board board_fn);
-    int findMaxValueIndex(const std::vector<Move>& moves);
+    //int findMaxValueIndex(const std::vector<Move>& moves);
+    void makeMove(Board &board_makemove, Color &turn);
+    std::vector<Move> findBestCapture(Board board_fncp);
 };
 
 

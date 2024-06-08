@@ -20,6 +20,19 @@ std::vector<Move> AI::generateMoves(Board board_gen, Color color_to_gen) {
     }
     return moves;
 }
+std::vector<Move> AI::generateCaptures(Board board_gen, Color color_to_gen)  {
+    std::vector<Move> captures;
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            if ((i + j) % 2 != 0 && board_gen.getFieldColor(i,j) == color_to_gen) {
+                //captures = board_gen.available_cap_from(i, j, board_gen);
+                board_gen.generateCapturesForChecker(i,j, captures, board_gen);
+                //std::cout<<"i "<<i<<"j "<<j<<std::endl;
+            }
+        }
+    }
+    return captures;
+}
 /*
 void AI::generateMovesForChecker(int x, int y, std::vector<Move>& moves, Board board_gen) const {
     static const Position directions[4] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
@@ -87,7 +100,7 @@ int AI::minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha,
     if (maximizingPlayer) {
         int best = MIN;
         for (int i=0; i<moves.size();i++){
-            board_minmax.moveChecker(moves[i].mv_cor);
+            board_minmax.moveChecker(moves[i].mv_cor, board_minmax);
             int val = minimax(board_minmax, depth - 1, false, alpha, beta);
             //std::cout<<"val "<<i<<" "<<val<<std::endl;
             best = std::max(best, val);
@@ -100,7 +113,7 @@ int AI::minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha,
         int best = MAX;
 
         for (int i=0; i<moves.size(); i++) {
-            board_minmax.moveChecker(moves[i].mv_cor);
+            board_minmax.moveChecker(moves[i].mv_cor, board_minmax);
             int val = minimax(board_minmax, depth - 1, true, alpha, beta);
             //std::cout<<"val "<<i<<" "<<val<<std::endl;
             //std::cout<<"best "<<i<<" "<<best<<std::endl;
@@ -116,55 +129,71 @@ int AI::minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha,
 }
 Move AI::findBestMove(Board board_fn) {
     std::vector<Move> moves = generateMoves(board_fn, AI_color);
+
     int bestValue = MIN;
     Move bestMove;
-    std::vector<Move> captureMoves;
+
     for (int i=0;i<moves.size();i++) {
-        if(moves[i].isCapture){
-            captureMoves.push_back(moves[i]);
+        board_fn.moveChecker(moves[i].mv_cor, board_fn);
+        int moveValue = minimax(board_fn, DEPTH, true, MIN, MAX);
+        std::cout<<"move val "<<moveValue<<std::endl;
+
+        if (moveValue >= bestValue) {
+            bestMove = moves[i];
+            bestValue = moveValue;
         }
     }
-    if(captureMoves.empty()){
-        for (int i=0;i<moves.size();i++) {
-            board_fn.moveChecker(moves[i].mv_cor); // Assuming moveChecker applies the move
-            //std::cout<<std::endl;
-            //newBoard.display();
-            int moveValue = minimax(board_fn, DEPTH, true, MIN, MAX);
-            std::cout<<"move val "<<moveValue<<std::endl;
-
-            if (moveValue >= bestValue) {
-                bestMove = moves[i];
-                bestValue = moveValue;
-            }
-        }
-    } else{
-        for (int i=0;i<captureMoves.size();i++) {
-            board_fn.moveChecker(captureMoves[i].mv_cor); // Assuming moveChecker applies the move
-            //std::cout<<std::endl;
-            //newBoard.display();
-            int capValue = minimax(board_fn, DEPTH, true, MIN, MAX);
-            std::cout<<"cap val "<<capValue<<std::endl;
-
-            if (capValue >= bestValue) {
-                bestMove = captureMoves[i];
-                bestValue = capValue;
-            }
-        }
-    }
-    //std::cout<<"bm cor to"<<bestMove.mv_cor.to.X<<bestMove.mv_cor.to.Y;
     return bestMove;
 }
-/*
-int AI::findMaxValueIndex(const std::vector<Move>& moves) {
-    int maxValue = MIN;
-    int maxIndex = -1;
+    //std::cout<<"bm cor to"<<bestMove.mv_cor.to.X<<bestMove.mv_cor.to.Y;
 
-    for (int i = 0; i < moves.size(); ++i) {
-        if (moves[i].score > maxValue) {
-            maxValue = moves[i].score;
-            maxIndex = i;
+
+std::vector<Move> AI::findBestCapture(Board board_fncp) {
+    std::vector<Move> captureMoves = generateCaptures(board_fncp, AI_color);
+    std::cout<<"size caputres: "<<captureMoves.size()<<std::endl;
+    std::vector<Move> final_sequence;
+
+    for (int i=0;i<captureMoves.size();i++) {
+        std::vector<Move> sequence;
+        sequence.push_back(captureMoves[i]);
+        board_fncp.available_jump_sequences(captureMoves[i].mv_cor.from, board_fncp, sequence, captureMoves[i]);
+        std::cout<<"seq size: "<<sequence.size()<<std::endl;
+//        for(int j=0; j<sequence.size();j++){
+//            board_fn.Capture(sequence[j].mv_cor, board_fn);
+//        }
+        //std::cout<<std::endl;
+        //board_fn.display();
+        //int capValue = minimax(board_fn, DEPTH, true, MIN, MAX);
+        //std::cout<<"cap val "<<capValue<<std::endl;
+
+//            if (capValue >= bestValue) {
+//                bestMove = captureMoves[i];
+//                bestValue = capValue;
+//            }
+        final_sequence=sequence;
+    }
+   return final_sequence;
+}
+void AI::makeMove(Board &board_makemove, Color &turn) {
+    std::cout << "AI is thinking..." << std::endl;
+    std::vector<Move> bestCapture = findBestCapture(board_makemove);
+    if(!bestCapture.empty()) {
+
+        for (int i = 0; i < bestCapture.size(); i++) {
+            board_makemove.Capture(bestCapture[i].mv_cor, board_makemove);
+        }
+        board_makemove.display();
+    } else{
+        Move bestMove=findBestMove(board_makemove);
+        //std::cout<<"best from"<<bestMove.mv_cor.front().X<<" "<<bestMove.mv_cor.front().Y<<"best to"<<bestMove.mv_cor.back().X<<" "<<bestMove.mv_cor.back().Y<<"best cap "<<bestMove.isCapture<<std::endl;
+        if(!bestMove.isCapture){
+            if (board_makemove.moveChecker(bestMove.mv_cor, board_makemove)) {
+                board_makemove.display();
+                turn = Color::BLACK;
+            } else {
+                std::cout << "AI made an invalid move. Exiting." << std::endl;
+                return;
+            }
         }
     }
-    return maxIndex;
 }
-*/

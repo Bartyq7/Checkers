@@ -1,7 +1,7 @@
 #include "board.h"
 #include "AI.h"
 
-int main() {
+int main(int argc, char *argv[]) {
     Board board;
     board.display();
 
@@ -17,9 +17,9 @@ int main() {
             if (temp == '-') {
                 Coordinates move_cor = board.changeCoordinates(from, to);
                 //Coordinates move_cor = board.changeCoordinates(from, to);
-                //std::cout<<"fromx "<<move_cor.front().X<<"fromY "<<move_cor.front().Y<<"tox "<<move_cor.back().X<<"toY "<<move_cor.back().Y<<std::endl;
 
-                if (board.moveChecker(move_cor)) {
+
+                if (board.moveChecker(move_cor, board)) {
                     board.display();
                     currentPlayer = Color::WHITE;
                 } else {
@@ -27,69 +27,81 @@ int main() {
                 }
             } else if (temp == 'x') {
                 Coordinates capt_cor = board.changeCoordinates(from, to);
-                //Coordinates capt_cor = board.changeCoordinates(from, to);
-                if (board.Capture(capt_cor)) {
-                    board.display();
-                    currentPlayer = Color::WHITE;
-                } else {
-                    std::cout << "Invalid capture. Try again." << std::endl;
+                //std::vector<Move> cur_seq;
+                Move cur_seq = {capt_cor, true};
+                //cur_seq.push_back({capt_cor, true});
+                std::vector<Move> seq;
+
+                board.available_jump_sequences(capt_cor.from, board, seq, cur_seq );
+                for(int i=0;i<seq.size();i++){
+                    //board.Capture(seq[i].mv_cor, board);
+                    if(board.Capture(seq[i].mv_cor, board)){
+                        board.display();
+                        currentPlayer= Color::WHITE;
+                    }else {
+                        std::cout << "Invalid capture. Try again." << std::endl;
+                    }
                 }
+
+
+                board.available_jump_sequences(capt_cor.from, board, seq, cur_seq );
+//                if (board.Capture(capt_cor, board)) {
+//                    board.display();
+//                    currentPlayer = Color::WHITE;
+//                } else {
+//                    std::cout << "Invalid capture. Try again." << std::endl;
+//                }
             } else {
                 std::cout << "Bad notation. Try again." << std::endl;
             }
         } else {
+            ai.makeMove(board, currentPlayer);
 //            std::cout << "Enter move : ";
 //            std::cin >> from >> temp >> to;
 //            if (temp == '-') {
-//                std::vector<Position> move_cor = board.changeCoordinates(from, to);
-//                //Coordinates move_cor = board.changeCoordinates(from, to);
-//                std::cout<<"fromx "<<move_cor.front().X<<"fromY "<<move_cor.front().Y<<"tox "<<move_cor.back().X<<"toY "<<move_cor.back().Y<<std::endl;
+//                Coordinates move_cor = board.changeCoordinates(from, to);
+//                //std::cout<<"fromx "<<move_cor.front().X<<"fromY "<<move_cor.front().Y<<"tox "<<move_cor.back().X<<"toY "<<move_cor.back().Y<<std::endl;
 //
-//                if (board.moveChecker(move_cor)) {
+//                if (board.moveChecker(move_cor, board)) {
 //                    board.display();
 //                    currentPlayer = Color::BLACK;
 //                } else {
 //                    std::cout << "Invalid move. Try again." << std::endl;
 //                }
 //            } else if (temp == 'x') {
-//                int mult;
-//                std::cin>>mult;
-//                std::vector<Position> capt_cor = board.changeCoordinates(from, to);
-//                //Coordinates capt_cor = board.changeCoordinates(from, to);
-//                if(!mult){
-//                if (board.Capture(capt_cor)) {
+//                Coordinates capt_cor = board.changeCoordinates(from, to);
+//                //std::vector<Move> cur_seq;
+//                Move cur_seq = {capt_cor, true};
+//                //cur_seq.push_back({capt_cor, true});
+//                std::vector<Move> seq;
+//                seq.push_back({capt_cor, true});
+//                board.available_jump_sequences(capt_cor.from, board, seq, cur_seq );
+//                for(int i=0;i<seq.size();i++){
+//                    if(board.Capture(seq[i].mv_cor, board)){
+//                        board.display();
+//                        currentPlayer= Color::BLACK;
+//                    }else {
+//                        std::cout << "Invalid capture. Try again." << std::endl;
+//                    }
+//                }
+
+//                for(int i=0;i<seq.size();i++){
+//
+//                    std::cout<<i<<"from "<<seq[i].mv_cor.from.X<<" "<<seq[i][j].mv_cor.from.Y<<"to "<<seq[i][j].mv_cor.to.X<<" "<<seq[i][j].mv_cor.to.Y<<std::endl;
+//
+//                }
+
+//                if (board.Capture(capt_cor, board)) {
 //                    board.display();
 //                    currentPlayer = Color::BLACK;
 //                } else {
 //                    std::cout << "Invalid capture. Try again." << std::endl;
 //                }
-//                } else{
-//                    //board.generateMultipleCapture()
-//                }
 //            } else {
 //                std::cout << "Bad notation. Try again." << std::endl;
 //            }
 
-            std::cout << "AI is thinking..." << std::endl;
-            Move bestMove=ai.findBestMove(board);
-            //std::cout<<"best from"<<bestMove.mv_cor.front().X<<" "<<bestMove.mv_cor.front().Y<<"best to"<<bestMove.mv_cor.back().X<<" "<<bestMove.mv_cor.back().Y<<"best cap "<<bestMove.isCapture<<std::endl;
-            if(!bestMove.isCapture){
-                if (board.moveChecker(bestMove.mv_cor)) {
-                    board.display();
-                    currentPlayer = Color::BLACK;
-                } else {
-                    std::cout << "AI made an invalid move. Exiting." << std::endl;
-                    break;
-                }
-            }else{
-                if (board.Capture(bestMove.mv_cor)) {
-                    board.display();
-                    currentPlayer = Color::BLACK;
-                } else {
-                    std::cout << "AI made an invalid move. Exiting." << std::endl;
-                    break;
-                }
-            }
+
         }
     }
 

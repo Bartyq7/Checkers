@@ -11,7 +11,7 @@
 
 const int BOARD_SIZE = 8;
 
-enum class Color { NONE, BLACK, WHITE };
+enum class Color { NONE, BLACK, WHITE, VOID };
 
 struct Checker {
     Color color;
@@ -38,29 +38,31 @@ struct Move {
 
 ////////////////////////////////////////////////
 class Board {
-    Checker board[BOARD_SIZE][BOARD_SIZE];
+    std::vector<std::vector<Checker>> board;
 public:
     Board();
     Color getFieldColor(int x, int y) const;
     bool getIfQueen(int x, int y) const;
     Checker getChecker(int x, int y)const;
+    std::vector<std::vector<Checker>> getCurrentBoard();
     bool hasChecker(int x, int y) const;
-    bool isSafe(int x, int y, Color color) const;
+    //bool isSafe(int x, int y, Color color) const;
     void generateMovesForChecker(int x, int y, std::vector<Move>& moves);
-    void generateCapturesForChecker(int x, int y, std::vector<Move>& moves);
+    void generateCapturesForChecker(int x, int y, std::vector<Move> &captures, Board board_gncp);
+    //void generateCapturesForChecker(int x, int y, std::vector<Move>& moves);
     bool isMoveValid(int fromX, int fromY, int toX, int toY) const;
-    bool moveChecker(Coordinates move_cor);
+    bool moveChecker(Coordinates move_cor, Board &board_move);
     Coordinates changeCoordinates(int from, int to);
-    bool QueenCheck(Coordinates cor_que);
-    bool canCapture(Coordinates capt_cor) const;
-    bool Capture(Coordinates capt_cor);
-    void generateMultipleCapture(int x, int y, std::vector<Move>& moves_mult);
+    bool QueenCheck(Coordinates cor_que, Board &board_queen);
+    bool canCapture(Coordinates capt_cor, Board board_cancap) const;
+    bool Capture(Coordinates capt_cor, Board &board_cap);
+    //void generateMultipleCapture(int x, int y, std::vector<Move>& moves_mult);
     void display() const;
-    void available_jump_sequences(Coordinates cor_cap, std::vector<Coordinates> current_sequence,
-                                         Checker temp_board[BOARD_SIZE][BOARD_SIZE],
-                                         std::vector<Coordinates> &sequences);
-    std::vector<Move> available_cap_from(Position from, Checker temp_board[BOARD_SIZE][BOARD_SIZE]) const;
-    void cap(Coordinates &capt_cor, Checker temp_board[BOARD_SIZE][BOARD_SIZE]);
+    void available_jump_sequences(Position from, Board temp_board, std::vector<Move> &sequence, Move current_sequence);
+    std::vector<Move> available_cap_from(int x, int y, Board board_av) const;
+    //void cap(Coordinates capt_cor, std::vector<std::vector<Checker>> &temp_board);
+
+    //std::vector<std::vector<Checker>> copyBoard(Checker board_from[BOARD_SIZE][BOARD_SIZE]);
 };
 
 
