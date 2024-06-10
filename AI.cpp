@@ -34,36 +34,17 @@ std::vector<Move> AI::generateCaptures(Board board_gen, Color color_to_gen)  {
     }
     return captures;
 }
-/*
-void AI::generateMovesForChecker(int x, int y, std::vector<Move>& moves, Board board_gen) const {
-    static const Position directions[4] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
-    static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
-
-    for (int i=0; i<4; i++) {
-        int newX = x + directions[i].X;
-        int newY = y + directions[i].Y;
-        Coordinates cor = {{x, y}, {newX, newY}};
-        if (board_gen.isMoveValid(cor.from.X, cor.from.Y, cor.to.X, cor.to.Y)) {
-            //std::cout<<"cor from "<<cor.from.X<<cor.from.Y<<" cor to "<<cor.to.X<<cor.to.Y<<std::endl;
-            moves.push_back({cor, false, board_gen.QueenCheck(cor)});
-        }
-    }
-
-    for (int i=0; i<4; i++) {
-        int newX = x + captureDirections[i].X;
-        int newY = y + captureDirections[i].Y;
-        Coordinates cor = {{x, y}, {newX, newY}};
-        if (board_gen.canCapture(cor)) {
-            moves.push_back({cor, true,board_gen.QueenCheck(cor)});
-        }
-    }
-}*/
 int AI::evaluate(Board board_ev){
     int score = 0;
-    const int pawnValue = 1;
-    const int queenValue = 5;
-    const int centralControlBonus = 2;
-    const int edgePenalty = -1;
+    const int pawnValue = 5;
+    const int queenValue = 50;
+    const int zone1Bonus = 2;
+    const int zone2Bonus = 1;
+    const int level2Bonus = 1;
+    const int level3Bonus = 3;
+    const int level4Bonus = 20;
+    const int captureBonus = 30;
+    const int notSafePanish = -3;
 
     for (int i = 0; i < BOARD_SIZE; ++i) {
         for (int j = 0; j < BOARD_SIZE; ++j) {
@@ -75,14 +56,35 @@ int AI::evaluate(Board board_ev){
                     score += (checker.color == AI_color ? pawnValue : 0);
                 }
 
-                if ((i >= 3 && i <= 4) && (j >= 2 && j <= 4)) {
-                    score += (checker.color == AI_color ? centralControlBonus : 0);
+                if ((i >= 2 && i <= 5) && (j >= 2 && j <= 5)) {
+                    score += (checker.color == AI_color ? zone1Bonus : 0);
                 }
-
-                // Dodaj punkty za bezpieczeństwo (czy pionek jest zagrożony przejęciem)
-//                if (!board_ev.isSafe(i, j, checker.color)) {
-//                    score += (checker.color == AI_color ? edgePenalty : 0);
-//                }
+                if ((i >= 1 && i <= 6) && (j >= 1 && j <= 6)) {
+                    score += (checker.color == AI_color ? zone2Bonus : 0);
+                }
+                if(AI_color==Color::WHITE){
+                    if (i >= 0 && i <= 1) {
+                        score += (checker.color == AI_color ? level4Bonus : 0);
+                    } else if(i>=2 && i<=3){
+                        score += (checker.color == AI_color ? level3Bonus : 0);
+                    } else if(i>=4 && i<=5){
+                        score += (checker.color == AI_color ? level2Bonus : 0);
+                    }
+                }
+                if(AI_color==Color::BLACK){
+                    if (i >= 7 && i <= 8) {
+                        score += (checker.color == AI_color ? level4Bonus : 0);
+                    } else if(i>=5 && i<=6){
+                        score += (checker.color == AI_color ? level3Bonus : 0);
+                    } else if(i>=3 && i<=4){
+                        score += (checker.color == AI_color ? level2Bonus : 0);
+                    }
+                }
+                if(checker.color==AI_color){
+                    if(!board_ev.isSafe(i, j, AI_color)){
+                        score += (checker.color == AI_color ? notSafePanish : 0);
+                    }
+                }
             }
         }
     }
@@ -207,4 +209,22 @@ void AI::makeMove(Board &board_makemove, std::string& output_string) {
 int AI::changeCorFinal(int x, int y){
     int num=x*4+y/2;
     return num+1;
+}
+void AI::takeMove(Board &board, std::vector<Move> player_move) {
+
+
+    for (int i = 0; i < player_move.size(); i++) {
+//        std::cout << "Move 1: From (" << player_move[i].mv_cor.from.X << "," << player_move[i].mv_cor.from.Y
+//                  << ") to (" << player_move[i].mv_cor.to.X
+//                  << "," << player_move[i].mv_cor.to.Y << ")" << "cap " << player_move[i].isCapture
+//                  << " size :" << player_move.size() << std::endl;
+        if (!player_move[i].isCapture) {
+            board.moveChecker(player_move[i].mv_cor, board);
+        } else if (player_move[i].isCapture) {
+            board.Capture(player_move[i].mv_cor, board);
+        } else {
+            std::cerr << "Invalid move" << std::endl;
+            return;
+        }
+    }
 }

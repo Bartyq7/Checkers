@@ -2,6 +2,19 @@
 #include "AI.h"
 #include <string>
 #include <cstring>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <strings.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+#define BUFSPACE 1024
+
 
 bool is_move(const std::string& move) {
     return move.find('x') == std::string::npos;
@@ -69,45 +82,61 @@ std::vector<Move> parse_move(const std::string& move) {
 }
 
 int main(int argc, char *argv[]) {
+    char buf[BUFSPACE];
+    int serv_sock;
+    struct sockaddr_in serv_addr;
+    struct hostent *serv_hostent;
+
     std::string interface=argv[1];
+
     std::string turn = argv[2];
+
+    int depth = atoi(argv[3]);
+
     Board board;
     Color oponent, ai_color;
-    bool ai_is_strating;
-    int depth = atoi(argv[3]);
+
     int random_seed;
-    int ip_address;
+    std::string ip_address;
     int ip_port;
 
     if(turn == "WHITE"){
         ai_color = Color::WHITE;
         oponent = (turn=="WHITE" ? Color::BLACK: Color::WHITE);
-        ai_is_strating= false;
     }
     if(turn == "BLACK"){
         ai_color = Color::BLACK;
         oponent = (turn=="BLACK" ? Color::WHITE: Color::BLACK);
-        ai_is_strating= true;
     }
+
+
     AI ai(ai_color, depth);
     Color currentPlayer = oponent;
-    if(argc<=3){
+
+
+    if(argc == 4){
         srand(time(NULL));
     }
-    if(argc<=4){
-        random_seed = atoi(argv[3]);
-        srand(random_seed);
-    }
-    if(argc<=6){
-        srand(time(NULL));
-        ip_address = atoi(argv[4]);
-        ip_port = atoi(argv[5]);
-    }
-    if(argc>=7){
+    else if(argc == 5){
         random_seed = atoi(argv[4]);
         srand(random_seed);
-        ip_address = atoi(argv[5]);
+        //std::cout<<"seed"<<random_seed<<std::endl;
+    }
+    else if(argc == 6){
+        srand(time(NULL));
+        ip_address = argv[4];
+        ip_port = atoi(argv[5]);
+        //std::cout<<"address"<<ip_address<<" port"<<ip_port<<std::endl;
+    }
+    else if(argc ==7){
+        random_seed = atoi(argv[4]);
+        //std::cout<<"seed"<<random_seed<<std::endl;
+        srand(random_seed);
+        ip_address = argv[5];
         ip_port = atoi(argv[6]);
+        //std::cout<<"address"<<ip_address<<" port"<<ip_port<<std::endl;
+    } else{
+        return 0;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,6 +225,86 @@ int main(int argc, char *argv[]) {
     }
     ////////////////////////////////////////////////////
     else if(interface=="NET"){
+
+        serv_sock = socket(AF_INET, SOCK_STREAM, 0);
+        if(serv_sock < 0)
+        {
+            perror("socket");
+            exit(errno);
+        }
+        serv_hostent = gethostbyname(ip_address);
+        if(serv_hostent == 0)
+        {
+            std::cerr<<"[Error: "<<argv[0]<<"] Nieznany adres IP: "<<ip_address<<std::endl;
+            exit(-1);
+        }
+        serv_addr.sin_family = AF_INET;
+        memcpy(&serv_addr.sin_addr, serv_hostent->h_addr, serv_hostent->h_length);
+        serv_addr.sin_port = htons(ip_port);
+
+        std::cout<<"Laczymy sie z serwerem"<<std::endl;
+        if(connect(serv_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+        {
+            perror("connect");
+            exit(-1);
+        }
+
+        std::cout<<"Polaczenie nawiazane, zaczynamy gre"<<std::endl;
+
+        int n;
+        bool myturn;
+
+
+
+        if(ai_color==Color::Black){ 
+            myturn=true;
+        }  //Czarny zaczyna
+        else{
+            myturn=false;
+        }              //Biały czeka
+        while(true)
+        {
+            if(myturn)
+            {
+                std::string output_string;
+                ai.makeMove(board, output_string);
+                std::cout<<"Wysylam do serwera moj ruch: "<<output_string<<std::endl;
+                for(int i=0; i<output_string.size(); i++){
+                    buf[i]=output_string[i];
+                }
+                buf[output_string.size()]=0;
+                if(write(serv_sock, buf, output_string.size()) < 0)
+                {
+                    perror("write");
+                    exit(errno);
+                }
+                myturn=false;
+            }
+            std::cout<<"Czekam na ruch przeciwnika..."<<std::endl;
+
+            n=read(serv_sock, buf, sizeof buf);
+
+            if(n<0)
+            {
+                perror("read");
+                exit(errno);
+            }
+            if(n==0)
+            { /* pusty komunikat = zamkniete polaczenie */
+                std::cout<<"Broker zamknal polaczenie"<<std::endl;
+                exit(0);
+            }
+            buf[n]=0;
+
+            std::cout<<"Otrzymalem ruch przeciwnika: "<<buf<<std::endl;
+
+            std::string input_string=buf;
+
+            std::vector<Move> player_move = parse_move(input_string);
+            ai.takeMove(board, player_move);
+            myturn=true;
+        }
+
 
     } else{
         return 0;

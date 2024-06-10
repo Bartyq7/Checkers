@@ -70,7 +70,29 @@ bool Board::hasChecker(int x, int y) const{
 //
 //    return true; // Pionek jest bezpieczny
 //}
+bool Board::isSafe(int x, int y, Color color) const {
+    int behind_X[2]={-1,1};
+    int behind_Y;
+    int leftBehindX, leftBehindY;
+    int rightBehindX, rightBehindY;
+    if(color==Color::BLACK){
+        behind_Y = -1;
+    }
+    if(color == Color::WHITE){
+        behind_Y = 1;
+    }
+    leftBehindX = x+behind_X[0];
+    rightBehindX = x+behind_X[1];
+    leftBehindY = y+behind_Y;
+    rightBehindY = y+behind_Y;
 
+    if(board[leftBehindX][leftBehindY].color==color && leftBehindX>=0 &leftBehindX<BOARD_SIZE && leftBehindY>=0 &&leftBehindY<BOARD_SIZE){
+        return true;
+    } else if(board[rightBehindX][rightBehindY].color == color && rightBehindX>=0 &rightBehindX<BOARD_SIZE && rightBehindY>=0 && rightBehindY<BOARD_SIZE){
+        return true;
+    }
+    return false;
+}
 void Board::generateMovesForChecker(int x, int y, std::vector<Move>& moves) {
     static const Position directions[4] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
     static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
