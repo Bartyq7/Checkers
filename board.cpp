@@ -139,25 +139,7 @@ bool Board::isMoveValid(int fromX, int fromY, int toX, int toY) const {
     return true;
 }
 
-Coordinates Board::changeCoordinates(int from, int to) {
-    Coordinates cor;
-    int ind;
-    ind=from-1;
-    cor.from.X= ind/4;
-    if(cor.from.X%2==0){
-        cor.from.Y=(ind%4)*2 +1;
-    } else{
-        cor.from.Y = (ind % 4)*2;
-    }
-    ind=to-1;
-    cor.to.X= ind/4;
-    if(cor.to.X%2==0){
-        cor.to.Y=(ind%4)*2 +1;
-    } else{
-        cor.to.Y = (ind % 4)*2;
-    }
-    return cor;
-}
+
 bool Board::moveChecker(Coordinates move_cor, Board &board_move) {
     //Coordinates move_cor = changeCoordinates(from, to);
     if (!isMoveValid(move_cor.from.X, move_cor.from.Y, move_cor.to.X, move_cor.to.Y)) {
@@ -279,8 +261,8 @@ void Board::display() const {
     }
 }
 
-void Board::available_jump_sequences(Position from, Board temp_board, std::vector<Move> &sequence, Move current_sequence) {
-    std::vector<Move> caps = available_cap_from(from.X, from.Y, temp_board);
+void Board::available_capture_sequences(Position from, Board temp_board, std::vector<Move> &sequence, Move current_sequence) {
+    std::vector<Move> caps = available_captures_from(from.X, from.Y, temp_board);
     //std::cout<<"caps from"<<caps[0].mv_cor.from.X<<" "<<caps[0].mv_cor.from.Y<<" caps to "<<caps[0].mv_cor.to.X<<" "<<caps[0].mv_cor.to.Y<<std::endl;
     if(caps.empty()){
         sequence.push_back(current_sequence);
@@ -297,12 +279,12 @@ void Board::available_jump_sequences(Position from, Board temp_board, std::vecto
         Move new_sequence = current_sequence;
         //new_sequence.push_back(caps[i]);
         new_sequence = {caps[i]};
-        available_jump_sequences(caps[i].mv_cor.to,new_board, sequence, new_sequence);
+        available_capture_sequences(caps[i].mv_cor.to,new_board, sequence, new_sequence);
     }
 
 }
 
-std::vector<Move> Board::available_cap_from(int x, int y, Board board_av) const {
+std::vector<Move> Board::available_captures_from(int x, int y, Board &board_av) const {
     std::vector<Move> captures;
     static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
     for (int i=0; i<4; i++) {
@@ -315,21 +297,29 @@ std::vector<Move> Board::available_cap_from(int x, int y, Board board_av) const 
     }
     return captures;
 }
-
-//void Board::cap(Coordinates capt_cor, std::vector<std::vector<Checker>> &temp_board) {
-//    int midX = (capt_cor.from.X + capt_cor.to.X) / 2;
-//    int midY = (capt_cor.from.Y + capt_cor.to.Y) / 2;
-//    temp_board[capt_cor.to.X][capt_cor.to.Y] = temp_board[capt_cor.from.X][capt_cor.from.Y];
-//    temp_board[capt_cor.from.X][capt_cor.from.Y] = Checker();
-//    temp_board[midX][midY] = Checker();
-//}
-//std::vector<std::vector<Checker>> Board::copyBoard(Checker board_from[BOARD_SIZE][BOARD_SIZE]){
-//    std::vector<std::vector<Checker>> board_to;
-//    for(int i=0; i<BOARD_SIZE; i++){
-//        for(int j=0; j<BOARD_SIZE; j++){
-//            board_to[i][j] = board_from[i][j];
-//        }
-//    }
-//    return board_to;
-//}
+bool Board::checkEndGame(){
+    bool blackWins = false;
+    bool whiteWins = false;
+    for (int i = 0; i < BOARD_SIZE; ++i) {
+        for (int j = 0; j < BOARD_SIZE; ++j) {
+            if ((i + j) % 2 != 0) {
+               if(board[i][j].color==Color::WHITE){
+                   whiteWins= true;
+               }
+                else if(board[i][j].color==Color::BLACK){
+                    blackWins= true;
+                }
+            }
+        }
+    }
+    if(whiteWins == true && blackWins == false){
+        std::cout<<"White wins";
+        return true;
+    }
+    if(blackWins == true && whiteWins == false){
+        std::cout<<"Black wins";
+        return true;
+    }
+    return false;
+}
 

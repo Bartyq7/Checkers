@@ -4,8 +4,9 @@
 
 #include "AI.h"
 
-AI::AI(Color ai_color) {
+AI::AI(Color ai_color, int DEPTH_ai) {
     AI_color=ai_color;
+    DEPTH = DEPTH_ai;
 }
 
 std::vector<Move> AI::generateMoves(Board board_gen, Color color_to_gen) {
@@ -153,10 +154,11 @@ std::vector<Move> AI::findBestCapture(Board board_fncp) {
     std::cout<<"size caputres: "<<captureMoves.size()<<std::endl;
     std::vector<Move> final_sequence;
 
+
     for (int i=0;i<captureMoves.size();i++) {
         std::vector<Move> sequence;
         sequence.push_back(captureMoves[i]);
-        board_fncp.available_jump_sequences(captureMoves[i].mv_cor.from, board_fncp, sequence, captureMoves[i]);
+        board_fncp.available_capture_sequences(captureMoves[i].mv_cor.from, board_fncp, sequence, captureMoves[i]);
         std::cout<<"seq size: "<<sequence.size()<<std::endl;
 //        for(int j=0; j<sequence.size();j++){
 //            board_fn.Capture(sequence[j].mv_cor, board_fn);
@@ -174,26 +176,35 @@ std::vector<Move> AI::findBestCapture(Board board_fncp) {
     }
    return final_sequence;
 }
-void AI::makeMove(Board &board_makemove, Color &turn) {
+void AI::makeMove(Board &board_makemove, std::string& output_string) {
     std::cout << "AI is thinking..." << std::endl;
     std::vector<Move> bestCapture = findBestCapture(board_makemove);
-    if(!bestCapture.empty()) {
 
+    if(!bestCapture.empty()) {
         for (int i = 0; i < bestCapture.size(); i++) {
+            output_string += std::to_string(changeCorFinal(bestCapture[i].mv_cor.from.X, bestCapture[i].mv_cor.from.Y))+"x";
+            if(i==(bestCapture.size()-1)){
+                output_string += std::to_string(changeCorFinal(bestCapture[i].mv_cor.to.X, bestCapture[i].mv_cor.to.Y));
+            }
             board_makemove.Capture(bestCapture[i].mv_cor, board_makemove);
+            //turn = (turn == Color::BLACK ? Color::WHITE:Color::BLACK) ;
         }
-        board_makemove.display();
     } else{
         Move bestMove=findBestMove(board_makemove);
         //std::cout<<"best from"<<bestMove.mv_cor.front().X<<" "<<bestMove.mv_cor.front().Y<<"best to"<<bestMove.mv_cor.back().X<<" "<<bestMove.mv_cor.back().Y<<"best cap "<<bestMove.isCapture<<std::endl;
         if(!bestMove.isCapture){
             if (board_makemove.moveChecker(bestMove.mv_cor, board_makemove)) {
-                board_makemove.display();
-                turn = Color::BLACK;
+                output_string = std::to_string(changeCorFinal(bestMove.mv_cor.from.X, bestMove.mv_cor.from.Y))+"-"+
+                        std::to_string(changeCorFinal(bestMove.mv_cor.to.X, bestMove.mv_cor.to.Y));
+                //turn = (turn == Color::BLACK ? Color::WHITE:Color::BLACK);
             } else {
                 std::cout << "AI made an invalid move. Exiting." << std::endl;
                 return;
             }
         }
     }
+}
+int AI::changeCorFinal(int x, int y){
+    int num=x*4+y/2;
+    return num+1;
 }

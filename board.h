@@ -9,6 +9,7 @@
 #include <iostream>
 
 
+
 const int BOARD_SIZE = 8;
 
 enum class Color { NONE, BLACK, WHITE, VOID };
@@ -52,15 +53,16 @@ public:
     //void generateCapturesForChecker(int x, int y, std::vector<Move>& moves);
     bool isMoveValid(int fromX, int fromY, int toX, int toY) const;
     bool moveChecker(Coordinates move_cor, Board &board_move);
-    Coordinates changeCoordinates(int from, int to);
+    //Coordinates changeCoordinates(int from, int to);
     bool QueenCheck(Coordinates cor_que, Board &board_queen);
     bool canCapture(Coordinates capt_cor, Board board_cancap) const;
     bool Capture(Coordinates capt_cor, Board &board_cap);
     //void generateMultipleCapture(int x, int y, std::vector<Move>& moves_mult);
     void display() const;
-    void available_jump_sequences(Position from, Board temp_board, std::vector<Move> &sequence, Move current_sequence);
-    std::vector<Move> available_cap_from(int x, int y, Board board_av) const;
+    void available_capture_sequences(Position from, Board temp_board, std::vector<Move> &sequence, Move current_sequence);
+    std::vector<Move> available_captures_from(int x, int y, Board &board_av) const;
     //void cap(Coordinates capt_cor, std::vector<std::vector<Checker>> &temp_board);
+    bool checkEndGame();
 
     //std::vector<std::vector<Checker>> copyBoard(Checker board_from[BOARD_SIZE][BOARD_SIZE]);
 };

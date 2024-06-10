@@ -8,13 +8,14 @@
 
 const int MIN = -10000;
 const int MAX = 10000;
-const int DEPTH = 2;
+//const int DEPTH = 2;
 class AI {
     Color AI_color;
+    int DEPTH;
     //Checker board[BOARD_SIZE][BOARD_SIZE];
     //Board *current_board;
 public:
-    AI(Color ai_color);
+    AI(Color ai_color, int DEPTH_ai);
     //void get_current_board();
     std::vector<Move> generateMoves(Board board_gen, Color color_to_gen);
     std::vector<Move> generateCaptures(Board board_gen, Color color_to_gen);
@@ -22,8 +23,9 @@ public:
     int minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha, int beta);
     Move findBestMove(Board board_fn);
     //int findMaxValueIndex(const std::vector<Move>& moves);
-    void makeMove(Board &board_makemove, Color &turn);
+    void makeMove(Board &board_makemove, std::string& output_string);
     std::vector<Move> findBestCapture(Board board_fncp);
+    int changeCorFinal(int x, int y);
 };
 
 
