@@ -80,11 +80,11 @@ int AI::evaluate(Board board_ev){
                         score += (checker.color == AI_color ? level2Bonus : 0);
                     }
                 }
-                if(checker.color==AI_color){
-                    if(!board_ev.isSafe(i, j, AI_color)){
-                        score += (checker.color == AI_color ? notSafePanish : 0);
-                    }
-                }
+//                if(checker.color==AI_color){
+//                    if(!board_ev.isSafe(i, j, AI_color)){
+//                        score += (checker.color == AI_color ? notSafePanish : 0);
+//                    }
+//                }
             }
         }
     }
@@ -132,7 +132,7 @@ int AI::minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha,
 }
 Move AI::findBestMove(Board board_fn) {
     std::vector<Move> moves = generateMoves(board_fn, AI_color);
-
+    //std::cout<<"chuj";
     int bestValue = MIN;
     Move bestMove;
 
@@ -192,6 +192,7 @@ void AI::makeMove(Board &board_makemove, std::string& output_string) {
             //turn = (turn == Color::BLACK ? Color::WHITE:Color::BLACK) ;
         }
     } else{
+
         Move bestMove=findBestMove(board_makemove);
         //std::cout<<"best from"<<bestMove.mv_cor.front().X<<" "<<bestMove.mv_cor.front().Y<<"best to"<<bestMove.mv_cor.back().X<<" "<<bestMove.mv_cor.back().Y<<"best cap "<<bestMove.isCapture<<std::endl;
         if(!bestMove.isCapture){
