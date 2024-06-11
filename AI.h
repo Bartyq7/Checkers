@@ -20,9 +20,10 @@ public:
     int minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha, int beta);
     Move findBestMove(Board board_fn);
     void makeMove(Board &board_makemove, std::string& output_string);
-    std::vector<Move> findBestCapture(Board board_fncp);
+    std::vector<Move> findBestCapture(Board board_fncp, bool& no_multiple_capture);
     int changeCorFinal(int x, int y);
     void takeMove(Board &board, std::vector<Move> player_move);
+    Move generateRandomMove(Board board_rm,  Color ai_col);
 };
 
 

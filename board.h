@@ -56,11 +56,10 @@ public:
     bool canCapture(Coordinates capt_cor, Board board_cancap) const;
     bool Capture(Coordinates capt_cor, Board &board_cap);
     void display() const;
-    void available_capture_sequences(Position from, Board temp_board, std::vector<Move> &sequence, Move current_sequence);
+    bool capture_sequences(Position &from, Board temp_board, std::vector<Move> &sequence, Move current_sequence, Color ai_color);
     std::vector<Move> available_captures_from(int x, int y, Board &board_av) const;
     bool checkEndGame();
-
-    //std::vector<std::vector<Checker>> copyBoard(Checker board_from[BOARD_SIZE][BOARD_SIZE]);
+    void undoCapture(Board &temp_board, Move capture, Color ai_color);
 };
 
 

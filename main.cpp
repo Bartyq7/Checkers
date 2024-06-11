@@ -96,109 +96,48 @@ int main(int argc, char *argv[]) {
     Board board;
     Color oponent, ai_color;
 
-    int random_seed;
-    std::string ip_address;
-    int ip_port;
+    int random_seed = atoi(argv[4]);
+
+    //std::string ip_address;
+    int ip_port = atoi(argv[6]);
 
     if(turn == "WHITE"){
         ai_color = Color::WHITE;
-        oponent = (turn=="WHITE" ? Color::BLACK: Color::WHITE);
+        //oponent = (turn=="WHITE" ? Color::BLACK: Color::WHITE);
     }
     if(turn == "BLACK"){
         ai_color = Color::BLACK;
-        oponent = (turn=="BLACK" ? Color::WHITE: Color::BLACK);
+        //oponent = (turn=="BLACK" ? Color::WHITE: Color::BLACK);
     }
 
 
     AI ai(ai_color, depth);
-    Color currentPlayer = oponent;
 
 
-    if(argc == 4){
-        srand(time(NULL));
-    }
-    else if(argc == 5){
-        random_seed = atoi(argv[4]);
-        srand(random_seed);
-        //std::cout<<"seed"<<random_seed<<std::endl;
-    }
-    else if(argc == 6){
-        srand(time(NULL));
-        ip_address = argv[4];
-        ip_port = atoi(argv[5]);
-        //std::cout<<"address"<<ip_address<<" port"<<ip_port<<std::endl;
-    }
-    else if(argc ==7){
-        random_seed = atoi(argv[4]);
-        //std::cout<<"seed"<<random_seed<<std::endl;
-        srand(random_seed);
-        ip_address = argv[5];
-        ip_port = atoi(argv[6]);
-        //std::cout<<"address"<<ip_address<<" port"<<ip_port<<std::endl;
-    } else{
-        return 0;
-    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
     if(interface == "GUI") {
+        bool ai_is_starting;
+        if(ai_color==Color::BLACK){
+           ai_is_starting=true;
+       }
+       else{
+           ai_is_starting=false;
+       }  
+
         board.display();
-        if (ai_color == Color::WHITE) {///////////////////////////////////////////////////////
             while (!board.checkEndGame()) {
-                if (currentPlayer == Color::BLACK) {
-                    if (oponent == Color::WHITE) {
-                        std::cout << "Enter move for White: " << std::endl;
-                    } else if (oponent == Color::BLACK) {
-                        std::cout << "Enter move for Black: " << std::endl;
-                    } else {
-                        std::cout << "You didn't pick any color" << std::endl;
-                        break;
-                    }
-                    std::string buf_string;
-                    std::cin >> buf_string;
-                    std::vector<Move> player_move = parse_move(buf_string);
-
-                    for (int i = 0; i < player_move.size(); i++) {
-                        std::cout << "Move 1: From (" << player_move[i].mv_cor.from.X << "," << player_move[i].mv_cor.from.Y
-                                  << ") to (" << player_move[i].mv_cor.to.X
-                                  << "," << player_move[i].mv_cor.to.Y << ")" << "cap " << player_move[i].isCapture
-                                  << " size :" << player_move.size() << std::endl;
-                        if (!player_move[i].isCapture) {
-                            board.moveChecker(player_move[i].mv_cor, board);
-                            currentPlayer = Color::WHITE;
-                        } else if (player_move[i].isCapture) {
-                            board.Capture(player_move[i].mv_cor, board);
-                            currentPlayer = Color::WHITE;
-                        } else {
-                            std::cout << "Invalid move" << std::endl;
-                            break;
-                        }
-                    }
-                    board.display();
-                } else {
+                if (ai_is_starting) {
                     std::string output_string;
                     ai.makeMove(board, output_string);
                     std::cout << "AI moved: " << output_string << std::endl;
-                    currentPlayer = Color::BLACK;
                     board.display();
                 }
-            }
-        } else if(ai_color==Color::BLACK){//////////////////////////////////
-            while (!board.checkEndGame()) {
-                if (currentPlayer == Color::BLACK) {
-                    std::string output_string;
-                    ai.makeMove(board, output_string);
-                    std::cout << "AI moved: " << output_string << std::endl;
-                    currentPlayer = Color::WHITE;
-                    board.display();
-                } else {
-                    if (oponent == Color::WHITE) {
+                    if (ai_is_starting) {
                         std::cout << "Enter move for White: " << std::endl;
-                    } else if (oponent == Color::BLACK) {
+                    } else{
                         std::cout << "Enter move for Black: " << std::endl;
-                    } else {
-                        std::cout << "You didn't pick any color" << std::endl;
-                        break;
-                    }
+                    } 
                     std::string buf_string;
                     std::cin >> buf_string;
                     std::vector<Move> player_move = parse_move(buf_string);
@@ -217,93 +156,91 @@ int main(int argc, char *argv[]) {
                             break;
                         }
                     }
-                    currentPlayer = Color::BLACK;
                     board.display();
-                }
-            }
-        }
+            }   
     }
     ////////////////////////////////////////////////////
     else if(interface=="NET"){
 
-        serv_sock = socket(AF_INET, SOCK_STREAM, 0);
-        if(serv_sock < 0)
-        {
-            perror("socket");
-            exit(errno);
-        }
-        serv_hostent = gethostbyname(ip_address);
-        if(serv_hostent == 0)
-        {
-            std::cerr<<"[Error: "<<argv[0]<<"] Nieznany adres IP: "<<ip_address<<std::endl;
-            exit(-1);
-        }
-        serv_addr.sin_family = AF_INET;
-        memcpy(&serv_addr.sin_addr, serv_hostent->h_addr, serv_hostent->h_length);
-        serv_addr.sin_port = htons(ip_port);
+       serv_sock = socket(AF_INET, SOCK_STREAM, 0);
+       if(serv_sock < 0)
+       {
+           perror("socket");
+           exit(errno);
+       }
+       serv_hostent = gethostbyname(argv[5]);
+       if(serv_hostent == 0)
+       {
+           std::cerr<<"[Error: "<<argv[0]<<"] Nieznany adres IP: "<<argv[5]<<std::endl;
+           exit(-1);
+       }
+       serv_addr.sin_family = AF_INET;
+       memcpy(&serv_addr.sin_addr, serv_hostent->h_addr, serv_hostent->h_length);
+       serv_addr.sin_port = htons(ip_port);
 
-        std::cout<<"Laczymy sie z serwerem"<<std::endl;
-        if(connect(serv_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-        {
-            perror("connect");
-            exit(-1);
-        }
+       std::cout<<"Laczymy sie z serwerem"<<std::endl;
+       if(connect(serv_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+       {
+           perror("connect");
+           exit(-1);
+       }
 
-        std::cout<<"Polaczenie nawiazane, zaczynamy gre"<<std::endl;
+       std::cout<<"Polaczenie nawiazane, zaczynamy gre"<<std::endl;
 
-        int n;
-        bool myturn;
+       int n;
+       bool current_player;
 
 
 
-        if(ai_color==Color::Black){ 
-            myturn=true;
-        }  //Czarny zaczyna
-        else{
-            myturn=false;
-        }              //Biały czeka
-        while(true)
-        {
-            if(myturn)
-            {
-                std::string output_string;
-                ai.makeMove(board, output_string);
-                std::cout<<"Wysylam do serwera moj ruch: "<<output_string<<std::endl;
-                for(int i=0; i<output_string.size(); i++){
-                    buf[i]=output_string[i];
-                }
-                buf[output_string.size()]=0;
-                if(write(serv_sock, buf, output_string.size()) < 0)
-                {
-                    perror("write");
-                    exit(errno);
-                }
-                myturn=false;
-            }
-            std::cout<<"Czekam na ruch przeciwnika..."<<std::endl;
+       if(ai_color==Color::BLACK){
+           current_player=true;
+       }
+       else{
+           current_player=false;
+       }              
+       while(true)
+       {
+           if(current_player)
+           {
+               std::string output_string;
+               ai.makeMove(board, output_string);
+               std::cout<<"Wysylam do serwera moj ruch: "<<output_string<<std::endl;
+               for(int i=0; i<output_string.size(); i++){
+                   buf[i]=output_string[i];
+               }
+               buf[output_string.size()]=0;
+               if(write(serv_sock, buf, output_string.size()) < 0)
+               {
+                   perror("write");
+                   exit(errno);
+               }
+               current_player=false;
+           }
+           std::cout<<"Czekam na ruch przeciwnika..."<<std::endl;
 
-            n=read(serv_sock, buf, sizeof buf);
+           n=read(serv_sock, buf, sizeof buf);
 
-            if(n<0)
-            {
-                perror("read");
-                exit(errno);
-            }
-            if(n==0)
-            { /* pusty komunikat = zamkniete polaczenie */
-                std::cout<<"Broker zamknal polaczenie"<<std::endl;
-                exit(0);
-            }
-            buf[n]=0;
+           if(n<0)
+           {
+               perror("read");
+               exit(errno);
+           }
+           if(n==0)
+           { /* pusty komunikat = zamkniete polaczenie */
+               std::cout<<"Broker zamknal polaczenie"<<std::endl;
+               exit(0);
+           }
+           buf[n]=0;
 
-            std::cout<<"Otrzymalem ruch przeciwnika: "<<buf<<std::endl;
+           std::cout<<"Otrzymalem ruch przeciwnika: "<<buf<<std::endl;
 
-            std::string input_string=buf;
+           std::string input_string=buf;
 
-            std::vector<Move> player_move = parse_move(input_string);
-            ai.takeMove(board, player_move);
-            myturn=true;
-        }
+           std::vector<Move> player_move = parse_move(input_string);
+           ai.takeMove(board, player_move);
+           board.display();
+           current_player=true;
+       }
 
 
     } else{

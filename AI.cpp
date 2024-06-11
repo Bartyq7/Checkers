@@ -80,11 +80,11 @@ int AI::evaluate(Board board_ev){
                         score += (checker.color == AI_color ? level2Bonus : 0);
                     }
                 }
-                if(checker.color==AI_color){
-                    if(!board_ev.isSafe(i, j, AI_color)){
-                        score += (checker.color == AI_color ? notSafePanish : 0);
-                    }
-                }
+//                if(checker.color==AI_color){
+//                    if(!board_ev.isSafe(i, j, AI_color)){
+//                        score += (checker.color == AI_color ? notSafePanish : 0);
+//                    }
+//                }
             }
         }
     }
@@ -92,7 +92,6 @@ int AI::evaluate(Board board_ev){
 }
 int AI::minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha, int beta) {
     if (depth == 0) {
-        //std::cout<<"Chuj"<<std::endl;
         //newBoard.display();
         return evaluate(board_minmax);
     }
@@ -132,14 +131,13 @@ int AI::minimax(Board board_minmax, int depth, bool maximizingPlayer, int alpha,
 }
 Move AI::findBestMove(Board board_fn) {
     std::vector<Move> moves = generateMoves(board_fn, AI_color);
-
     int bestValue = MIN;
     Move bestMove;
 
     for (int i=0;i<moves.size();i++) {
         board_fn.moveChecker(moves[i].mv_cor, board_fn);
         int moveValue = minimax(board_fn, DEPTH, true, MIN, MAX);
-        std::cout<<"move val "<<moveValue<<std::endl;
+        //std::cout<<"move val "<<moveValue<<std::endl;
 
         if (moveValue >= bestValue) {
             bestMove = moves[i];
@@ -151,17 +149,20 @@ Move AI::findBestMove(Board board_fn) {
     //std::cout<<"bm cor to"<<bestMove.mv_cor.to.X<<bestMove.mv_cor.to.Y;
 
 
-std::vector<Move> AI::findBestCapture(Board board_fncp) {
+std::vector<Move> AI::findBestCapture(Board board_fncp, bool &no_multiple_capture) {
     std::vector<Move> captureMoves = generateCaptures(board_fncp, AI_color);
-    std::cout<<"size caputres: "<<captureMoves.size()<<std::endl;
-    std::vector<Move> final_sequence;
-
-
+    //std::cout<<"size caputres: "<<captureMoves.size()<<std::endl;
+    std::vector<Move> sequence;
+    //bool multiple_capture;
+    //no_multiple_capture=true;
     for (int i=0;i<captureMoves.size();i++) {
-        std::vector<Move> sequence;
-        sequence.push_back(captureMoves[i]);
-        board_fncp.available_capture_sequences(captureMoves[i].mv_cor.from, board_fncp, sequence, captureMoves[i]);
-        std::cout<<"seq size: "<<sequence.size()<<std::endl;
+            if(board_fncp.capture_sequences(captureMoves[i].mv_cor.from, board_fncp, sequence, captureMoves[i], AI_color)){
+            sequence.push_back(captureMoves[i]);
+            no_multiple_capture =false;
+            return sequence;
+            }
+        }
+        //std::cout<<"seq size: "<<sequence.size()<<std::endl;
 //        for(int j=0; j<sequence.size();j++){
 //            board_fn.Capture(sequence[j].mv_cor, board_fn);
 //        }
@@ -174,33 +175,68 @@ std::vector<Move> AI::findBestCapture(Board board_fncp) {
 //                bestMove = captureMoves[i];
 //                bestValue = capValue;
 //            }
-        final_sequence=sequence;
+    
+    for (int i=0;i<captureMoves.size();i++) {
+        sequence.push_back(captureMoves[i]);
+        no_multiple_capture=true;
+        return sequence;
     }
-   return final_sequence;
+    return sequence;
 }
 void AI::makeMove(Board &board_makemove, std::string& output_string) {
-    std::cout << "AI is thinking..." << std::endl;
-    std::vector<Move> bestCapture = findBestCapture(board_makemove);
-
+    //std::cout << "AI is thinking..." << std::endl;
+    std::vector<Move> sequence;
+    bool no_multiple_capture = true;
+    std::vector<Move> bestCapture = findBestCapture(board_makemove, no_multiple_capture);
+    //bool multiple_capture;
+    //std::cout<<"best size: "<<bestCapture.size()<<std::endl;
+    // if(no_multiple_capture){
+    //     std::cout<<"nie ma wielobic"<<std::endl;
+    // }
+    // if(!no_multiple_capture){
+    //     std::cout<<"sa wielobicia"<<std::endl;
+    // }
     if(!bestCapture.empty()) {
-        for (int i = 0; i < bestCapture.size(); i++) {
-            output_string += std::to_string(changeCorFinal(bestCapture[i].mv_cor.from.X, bestCapture[i].mv_cor.from.Y))+"x";
-            if(i==(bestCapture.size()-1)){
-                output_string += std::to_string(changeCorFinal(bestCapture[i].mv_cor.to.X, bestCapture[i].mv_cor.to.Y));
-            }
-            board_makemove.Capture(bestCapture[i].mv_cor, board_makemove);
-            //turn = (turn == Color::BLACK ? Color::WHITE:Color::BLACK) ;
+        if(no_multiple_capture){
+            // std::cout<<"best 0 from "<<bestCapture[0].mv_cor.from.X<<" "<<bestCapture[0].mv_cor.from.Y<<"best 0 to "
+            // << bestCapture[0].mv_cor.to.X<<" "<<bestCapture[0].mv_cor.to.Y<<std::endl;
+            output_string = std::to_string(changeCorFinal(bestCapture[0].mv_cor.from.X, bestCapture[0].mv_cor.from.Y))+"x"+
+                        std::to_string(changeCorFinal(bestCapture[0].mv_cor.to.X, bestCapture[0].mv_cor.to.Y));
+                        }
+            board_makemove.Capture(bestCapture[0].mv_cor, board_makemove);
+        if(!no_multiple_capture){
+            output_string = std::to_string(changeCorFinal(bestCapture[0].mv_cor.from.X, bestCapture[0].mv_cor.from.Y))+"x"+
+                        std::to_string(changeCorFinal(bestCapture[0].mv_cor.to.X, bestCapture[0].mv_cor.to.Y));
+            // std::cout<<"best 1 from "<<bestCapture[1].mv_cor.from.X<<" "
+            // <<bestCapture[1].mv_cor.from.Y<<"best 0 to "<< bestCapture[1].mv_cor.to.X<<" "<<bestCapture[1].mv_cor.to.Y<<std::endl;
+            output_string += "x"+std::to_string(changeCorFinal(bestCapture[1].mv_cor.to.X, bestCapture[0].mv_cor.to.Y));
+            board_makemove.Capture(bestCapture[0].mv_cor, board_makemove);
+            board_makemove.Capture(bestCapture[1].mv_cor, board_makemove);
         }
+        
     } else{
         Move bestMove=findBestMove(board_makemove);
         //std::cout<<"best from"<<bestMove.mv_cor.front().X<<" "<<bestMove.mv_cor.front().Y<<"best to"<<bestMove.mv_cor.back().X<<" "<<bestMove.mv_cor.back().Y<<"best cap "<<bestMove.isCapture<<std::endl;
-        if(!bestMove.isCapture){
+        if( !bestMove.mv_cor.from.X==0 && !bestMove.mv_cor.from.Y==0 && !bestMove.mv_cor.to.X==0 && !bestMove.mv_cor.to.Y==0){
             if (board_makemove.moveChecker(bestMove.mv_cor, board_makemove)) {
                 output_string = std::to_string(changeCorFinal(bestMove.mv_cor.from.X, bestMove.mv_cor.from.Y))+"-"+
                         std::to_string(changeCorFinal(bestMove.mv_cor.to.X, bestMove.mv_cor.to.Y));
                 //turn = (turn == Color::BLACK ? Color::WHITE:Color::BLACK);
             } else {
-                std::cout << "AI made an invalid move. Exiting." << std::endl;
+                //std::cout << "AI made an invalid move. Exiting." << std::endl;
+                return;
+            }
+        }else{
+            //std::cout<<"cosik"<<std::endl;
+            bestMove = generateRandomMove(board_makemove, AI_color);
+            // std::cout<<"best from"<<bestMove.mv_cor.from.X<<" "<<bestMove.mv_cor.from.Y<<"best to"<<bestMove.mv_cor.to.X<<" "
+            // <<bestMove.mv_cor.to.Y<<"best cap "<<bestMove.isCapture<<std::endl;
+            if (board_makemove.moveChecker(bestMove.mv_cor, board_makemove)) {
+                output_string = std::to_string(changeCorFinal(bestMove.mv_cor.from.X, bestMove.mv_cor.from.Y))+"-"+
+                        std::to_string(changeCorFinal(bestMove.mv_cor.to.X, bestMove.mv_cor.to.Y));
+                //turn = (turn == Color::BLACK ? Color::WHITE:Color::BLACK);
+            } else {
+                //std::cout << "AI made an invalid move. Exiting." << std::endl;
                 return;
             }
         }
@@ -227,4 +263,26 @@ void AI::takeMove(Board &board, std::vector<Move> player_move) {
             return;
         }
     }
+}
+Move AI::generateRandomMove(Board board_rm, Color ai_col){
+    Move random_move;
+    for(int i=0; i<BOARD_SIZE;i++){
+        for(int j=0;j<BOARD_SIZE;j++){
+            if(board_rm.getFieldColor(i, j)==ai_col){
+                for(int z=-1;z<=1;z++){
+                    for(int y=-1;y<=1;y++){
+                        random_move.mv_cor.from.X=i;
+                        random_move.mv_cor.from.Y=j;
+                        random_move.mv_cor.to.X=z+i;
+                        random_move.mv_cor.to.Y=y+j;
+                        random_move.isCapture=false;
+                        if(board_rm.isMoveValid(random_move.mv_cor.from.X, random_move.mv_cor.from.Y, random_move.mv_cor.to.X, random_move.mv_cor.to.Y)){
+                            return random_move;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return random_move;
 }

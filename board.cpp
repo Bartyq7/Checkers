@@ -205,6 +205,9 @@ bool Board::canCapture(Coordinates cor, Board board_cancap) const {
     if (board_cancap.getFieldColor(cor.to.X, cor.to.Y) != Color::NONE) {
         return false;
     }
+    if (board_cancap.getFieldColor(cor.from.X, cor.from.Y) == Color::NONE) {
+        return false;
+    }
 
     int midX = (cor.from.X + cor.to.X) / 2;
     int midY = (cor.from.Y + cor.to.Y) / 2;
@@ -283,27 +286,29 @@ void Board::display() const {
     }
 }
 
-void Board::available_capture_sequences(Position from, Board temp_board, std::vector<Move> &sequence, Move current_sequence) {
-    std::vector<Move> caps = available_captures_from(from.X, from.Y, temp_board);
-    //std::cout<<"caps from"<<caps[0].mv_cor.from.X<<" "<<caps[0].mv_cor.from.Y<<" caps to "<<caps[0].mv_cor.to.X<<" "<<caps[0].mv_cor.to.Y<<std::endl;
-    if(caps.empty()){
-        sequence.push_back(current_sequence);
-        return;
-    }
-    for(int i=0; i<caps.size(); i++){
-        Board new_board;
-        new_board = temp_board;
-        new_board.Capture(caps[i].mv_cor, new_board);
-//        std::cout << i<<"Captured from (" << caps[i].mv_cor.from.X << ", " << caps[i].mv_cor.from.Y << ")"<<i<< "to ("
-//                  << caps[i].mv_cor.to.X << ", " << caps[i].mv_cor.to.Y << ")" << std::endl;
+bool Board::capture_sequences(Position &from, Board temp_board, std::vector<Move> &sequence, Move current_sequence, Color ai_color) {
+        std::vector<Move> captureMoves = available_captures_from(from.X, from.Y, temp_board);
+    bool multipleCapturesFound = false;
 
-        //cap(caps[i].mv_cor,new_board);
-        Move new_sequence = current_sequence;
-        //new_sequence.push_back(caps[i]);
-        new_sequence = {caps[i]};
-        available_capture_sequences(caps[i].mv_cor.to,new_board, sequence, new_sequence);
+    for (Move move : captureMoves) {
+        if (move.isCapture) {
+            temp_board.Capture(move.mv_cor, temp_board);
+            sequence.push_back(move);
+
+            if (capture_sequences(move.mv_cor.to, temp_board, sequence, move, ai_color)) {
+                multipleCapturesFound = true;
+            }
+
+            temp_board.undoCapture(temp_board,move, ai_color);
+            sequence.pop_back();
+        }
     }
 
+    if (!captureMoves.empty() && sequence.size() > 1) {
+        multipleCapturesFound = true;
+    }
+
+    return multipleCapturesFound;
 }
 
 std::vector<Move> Board::available_captures_from(int x, int y, Board &board_av) const {
@@ -343,5 +348,15 @@ bool Board::checkEndGame(){
         return true;
     }
     return false;
+}
+void Board::undoCapture(Board &temp_board, Move capture, Color ai_color){
+    int midX = (capture.mv_cor.from.X + capture.mv_cor.to.X)/2;
+    int midY = (capture.mv_cor.from.Y + capture.mv_cor.to.Y)/2;
+    Color oponent_color=(ai_color==Color::BLACK?Color::WHITE:Color::BLACK);
+
+
+    temp_board.board[capture.mv_cor.from.X][capture.mv_cor.from.Y] = temp_board.board[capture.mv_cor.to.X][capture.mv_cor.to.Y];
+    temp_board.board[capture.mv_cor.from.X][capture.mv_cor.from.Y] = Checker(ai_color);
+    temp_board.board[midX][midY] = Checker(oponent_color);
 }
 
