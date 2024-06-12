@@ -95,28 +95,16 @@ bool Board::isSafe(int x, int y, Color color) const {
 }
 void Board::generateMovesForChecker(int x, int y, std::vector<Move>& moves) {
     static const Position directions[4] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
-    static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
 
     for (int i=0; i<4; i++) {
         int newX = x + directions[i].X;
         int newY = y + directions[i].Y;
-        //Coordinates cor = {{x, y}, {newX, newY}};
         Coordinates cor = {{x,y},{newX,newY}};
         if (isMoveValid(cor.from.X, cor.from.Y, cor.to.X, cor.to.Y)) {
             //std::cout<<"cor from "<<cor.from.X<<cor.from.Y<<" cor to "<<cor.to.X<<cor.to.Y<<std::endl;
             moves.push_back({cor, false});
         }
     }
-//    for (int i=0; i<4; i++) {
-//        int newX = x + captureDirections[i].X;
-//        int newY = y + captureDirections[i].Y;
-//        Coordinates cor = {{x, y}, {newX, newY}};
-//        if (canCapture(cor)) {
-//            moves.push_back({cor, true});
-//        }
-//    }
-
-    //generateMultipleCapture(x,y,moves);
 }
 void Board::generateCapturesForChecker(int x, int y,std::vector<Move> &captures, Board board_gncp){
     //std::vector<Move> captures;
@@ -179,7 +167,7 @@ bool Board::QueenCheck(Coordinates cor_que, Board &board_queen) {
     //////////////////zamiana w krolowa///////////////////////////
     if(board_queen.board[cor_que.to.X][cor_que.to.Y].color == Color::BLACK && cor_que.to.X == 0){
         board_queen.board[cor_que.to.X][cor_que.to.Y].isQueen = true;
-        std::cout<<"to       "<<board_queen.board[cor_que.to.X][cor_que.to.Y].isQueen<<std::endl;
+        //std::cout<<"to       "<<board_queen.board[cor_que.to.X][cor_que.to.Y].isQueen<<std::endl;
         return true;
     }
     if(board_queen.board[cor_que.to.X][cor_que.to.Y].color == Color::WHITE && cor_que.to.X == BOARD_SIZE-1){
@@ -243,19 +231,6 @@ bool Board::Capture(Coordinates capt_cor, Board &board_cap) {
 
     return true;
 }
-//void Board::generateCapturesForChecker(int x, int y, std::vector<Move>& moves) {
-//    static const Position captureDirections[4] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
-//    for (int i=0; i<4; i++) {
-//        int newX = x + captureDirections[i].X;
-//        int newY = y + captureDirections[i].Y;
-//        std::vector<Position> cor = {{x, y}, {newX, newY}};
-//        if (canCapture(cor)) {
-//            moves.push_back({cor, true});
-//        }
-//    }
-//}
-
-
 void Board::display() const {
     int field=1;
     for (int i = 0; i < BOARD_SIZE; ++i) {
@@ -295,7 +270,6 @@ void Board::capture_sequences(Position &from, Board temp_board, std::vector<std:
     for (int i = 0; i < captureMoves.size(); ++i) {
         //sequences.push_back(previous_seq);
         Board new_board = temp_board;
-        //std::cout<<"chuj";
         //new_board.Capture(previous_seq[0].mv_cor, new_board);
         new_board.Capture(captureMoves[i].mv_cor, new_board);
         std::vector<Move> seqence_for_capture_moves = current_seq;

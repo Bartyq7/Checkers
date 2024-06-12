@@ -95,14 +95,13 @@ int main(int argc, char *argv[]) {
 
     Board board;
     Color oponent, ai_color;
-
     std::string seed = argv[4];
     if(seed == "-"){
         srand(time(NULL));
-    } else {
-        int random_seed = stoi(seed);
+    }else{
+    int random_seed = stoi(seed);
+    srand(random_seed);
     }
-
     //std::string ip_address;
     int ip_port = atoi(argv[6]);
 

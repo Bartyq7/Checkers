@@ -62,7 +62,7 @@ int AI::evaluate(Board board_ev){
                 if ((i >= 1 && i <= 6) && (j >= 1 && j <= 6)) {
                     score += (checker.color == AI_color ? zone2Bonus : 0);
                 }
-                if(AI_color==Color::WHITE){
+                if(AI_color==Color::WHITE && !checker.isQueen){
                     if (i >= 0 && i <= 1) {
                         score += (checker.color == AI_color ? level4Bonus : 0);
                     } else if(i>=2 && i<=3){
@@ -71,7 +71,7 @@ int AI::evaluate(Board board_ev){
                         score += (checker.color == AI_color ? level2Bonus : 0);
                     }
                 }
-                if(AI_color==Color::BLACK){
+                if(AI_color==Color::BLACK && !checker.isQueen){
                     if (i >= 7 && i <= 8) {
                         score += (checker.color == AI_color ? level4Bonus : 0);
                     } else if(i>=5 && i<=6){
@@ -137,7 +137,7 @@ Move AI::findBestMove(Board board_fn) {
     for (int i=0;i<moves.size();i++) {
         board_fn.moveChecker(moves[i].mv_cor, board_fn);
         int moveValue = minimax(board_fn, DEPTH, true, MIN, MAX);
-        //std::cout<<"move val "<<moveValue<<std::endl;
+        std::cout<<"move val "<<moveValue<<std::endl;
 
         if (moveValue >= bestValue) {
             bestMove = moves[i];
@@ -181,8 +181,8 @@ void AI::makeMove(Board &board_makemove, std::string& output_string) {
 
     } else{
         Move bestMove=findBestMove(board_makemove);
-        //std::cout<<"best from"<<bestMove.mv_cor.front().X<<" "<<bestMove.mv_cor.front().Y<<"best to"<<bestMove.mv_cor.back().X<<" "<<bestMove.mv_cor.back().Y<<"best cap "<<bestMove.isCapture<<std::endl;
-        if( !bestMove.mv_cor.from.X==0 && !bestMove.mv_cor.from.Y==0 && !bestMove.mv_cor.to.X==0 && !bestMove.mv_cor.to.Y==0){
+        std::cout<<"best from"<<bestMove.mv_cor.from.X<<" "<<bestMove.mv_cor.from.Y<<"best to"<<bestMove.mv_cor.to.X<<" "<<bestMove.mv_cor.to.Y<<"best cap "<<bestMove.isCapture<<std::endl;
+        if( !bestMove.mv_cor.from.X==0 && !bestMove.mv_cor.from.Y==0){
             if (board_makemove.moveChecker(bestMove.mv_cor, board_makemove)) {
                 output_string = std::to_string(changeCorFinal(bestMove.mv_cor.from.X, bestMove.mv_cor.from.Y))+"-"+
                         std::to_string(changeCorFinal(bestMove.mv_cor.to.X, bestMove.mv_cor.to.Y));
@@ -230,25 +230,17 @@ void AI::takeMove(Board &board, std::vector<Move> player_move) {
     }
 }
 Move AI::generateRandomMove(Board board_rm, Color ai_col){
-    Move random_move;
+    std::vector<Move> random_moves;
     for(int i=0; i<BOARD_SIZE;i++){
         for(int j=0;j<BOARD_SIZE;j++){
             if(board_rm.getFieldColor(i, j)==ai_col){
-                for(int z=-1;z<=1;z++){
-                    for(int y=-1;y<=1;y++){
-                        random_move.mv_cor.from.X=i;
-                        random_move.mv_cor.from.Y=j;
-                        random_move.mv_cor.to.X=z+i;
-                        random_move.mv_cor.to.Y=y+j;
-                        random_move.isCapture=false;
-                        if(board_rm.isMoveValid(random_move.mv_cor.from.X, random_move.mv_cor.from.Y, random_move.mv_cor.to.X, random_move.mv_cor.to.Y)){
-                            return random_move;
-                        }
-                    }
-                }
+                board_rm.generateMovesForChecker(i,j, random_moves);
             }
         }
     }
+    int random_moves_siz = random_moves.size();
+    int take_index = rand() % random_moves_siz;
+    Move random_move = random_moves[take_index];
     return random_move;
 }
 std::vector<Move> AI::findLongestCapture(const std::vector<std::vector<Move>> &vector_from){
