@@ -286,29 +286,23 @@ void Board::display() const {
     }
 }
 
-bool Board::capture_sequences(Position &from, Board temp_board, std::vector<Move> &sequence, Move current_sequence, Color ai_color) {
-        std::vector<Move> captureMoves = available_captures_from(from.X, from.Y, temp_board);
-    bool multipleCapturesFound = false;
-
-    for (Move move : captureMoves) {
-        if (move.isCapture) {
-            temp_board.Capture(move.mv_cor, temp_board);
-            sequence.push_back(move);
-
-            if (capture_sequences(move.mv_cor.to, temp_board, sequence, move, ai_color)) {
-                multipleCapturesFound = true;
-            }
-
-            temp_board.undoCapture(temp_board,move, ai_color);
-            sequence.pop_back();
-        }
+void Board::capture_sequences(Position &from, Board temp_board, std::vector<std::vector<Move>> &sequences, std::vector<Move> current_seq){
+    std::vector<Move> captureMoves = available_captures_from(from.X, from.Y, temp_board);
+    //std::cout<<captureMoves.size();
+    if(captureMoves.empty()){
+        sequences.push_back(current_seq);
     }
-
-    if (!captureMoves.empty() && sequence.size() > 1) {
-        multipleCapturesFound = true;
+    for (int i = 0; i < captureMoves.size(); ++i) {
+        //sequences.push_back(previous_seq);
+        Board new_board = temp_board;
+        //std::cout<<"chuj";
+        //new_board.Capture(previous_seq[0].mv_cor, new_board);
+        new_board.Capture(captureMoves[i].mv_cor, new_board);
+        std::vector<Move> seqence_for_capture_moves = current_seq;
+        //seqence_for_capture_moves.push_back(previous_seq[index]);
+        seqence_for_capture_moves.push_back(captureMoves[i]);
+        capture_sequences(captureMoves[i].mv_cor.to, new_board, sequences, seqence_for_capture_moves);
     }
-
-    return multipleCapturesFound;
 }
 
 std::vector<Move> Board::available_captures_from(int x, int y, Board &board_av) const {

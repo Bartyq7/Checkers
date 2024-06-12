@@ -149,71 +149,36 @@ Move AI::findBestMove(Board board_fn) {
     //std::cout<<"bm cor to"<<bestMove.mv_cor.to.X<<bestMove.mv_cor.to.Y;
 
 
-std::vector<Move> AI::findBestCapture(Board board_fncp, bool &no_multiple_capture) {
-    std::vector<Move> captureMoves = generateCaptures(board_fncp, AI_color);
+std::vector<Move> AI::findBestCapture(Board board_fncp) {
+    std::vector<Move> capture_moves = generateCaptures(board_fncp, AI_color);
     //std::cout<<"size caputres: "<<captureMoves.size()<<std::endl;
-    std::vector<Move> sequence;
-    //bool multiple_capture;
-    //no_multiple_capture=true;
-    for (int i=0;i<captureMoves.size();i++) {
-            if(board_fncp.capture_sequences(captureMoves[i].mv_cor.from, board_fncp, sequence, captureMoves[i], AI_color)){
-            sequence.push_back(captureMoves[i]);
-            no_multiple_capture =false;
-            return sequence;
-            }
-        }
-        //std::cout<<"seq size: "<<sequence.size()<<std::endl;
-//        for(int j=0; j<sequence.size();j++){
-//            board_fn.Capture(sequence[j].mv_cor, board_fn);
-//        }
-        //std::cout<<std::endl;
-        //board_fn.display();
-        //int capValue = minimax(board_fn, DEPTH, true, MIN, MAX);
-        //std::cout<<"cap val "<<capValue<<std::endl;
-
-//            if (capValue >= bestValue) {
-//                bestMove = captureMoves[i];
-//                bestValue = capValue;
-//            }
-    
-    for (int i=0;i<captureMoves.size();i++) {
-        sequence.push_back(captureMoves[i]);
-        no_multiple_capture=true;
-        return sequence;
+    std::vector<std::vector<Move>> sequence;
+    for(int index=0;index<capture_moves.size();index++){
+        Board board_seq = board_fncp;
+        board_seq.Capture(capture_moves[index].mv_cor,board_seq);
+        std::vector<Move> current_seq;
+        current_seq.push_back(capture_moves[index]);
+        board_seq.capture_sequences(capture_moves[index].mv_cor.to, board_seq, sequence, current_seq);
     }
-    return sequence;
+    std::vector<Move> bestCapture = findLongestCapture(sequence);
+    return bestCapture;
 }
 void AI::makeMove(Board &board_makemove, std::string& output_string) {
     //std::cout << "AI is thinking..." << std::endl;
     std::vector<Move> sequence;
     bool no_multiple_capture = true;
-    std::vector<Move> bestCapture = findBestCapture(board_makemove, no_multiple_capture);
-    //bool multiple_capture;
-    //std::cout<<"best size: "<<bestCapture.size()<<std::endl;
-    // if(no_multiple_capture){
-    //     std::cout<<"nie ma wielobic"<<std::endl;
-    // }
-    // if(!no_multiple_capture){
-    //     std::cout<<"sa wielobicia"<<std::endl;
-    // }
+    std::vector<Move> bestCapture = findBestCapture(board_makemove);
+
     if(!bestCapture.empty()) {
-        if(no_multiple_capture){
-            // std::cout<<"best 0 from "<<bestCapture[0].mv_cor.from.X<<" "<<bestCapture[0].mv_cor.from.Y<<"best 0 to "
-            // << bestCapture[0].mv_cor.to.X<<" "<<bestCapture[0].mv_cor.to.Y<<std::endl;
-            output_string = std::to_string(changeCorFinal(bestCapture[0].mv_cor.from.X, bestCapture[0].mv_cor.from.Y))+"x"+
-                        std::to_string(changeCorFinal(bestCapture[0].mv_cor.to.X, bestCapture[0].mv_cor.to.Y));
-                        }
-            board_makemove.Capture(bestCapture[0].mv_cor, board_makemove);
-        if(!no_multiple_capture){
-            output_string = std::to_string(changeCorFinal(bestCapture[0].mv_cor.from.X, bestCapture[0].mv_cor.from.Y))+"x"+
-                        std::to_string(changeCorFinal(bestCapture[0].mv_cor.to.X, bestCapture[0].mv_cor.to.Y));
-            // std::cout<<"best 1 from "<<bestCapture[1].mv_cor.from.X<<" "
-            // <<bestCapture[1].mv_cor.from.Y<<"best 0 to "<< bestCapture[1].mv_cor.to.X<<" "<<bestCapture[1].mv_cor.to.Y<<std::endl;
-            output_string += "x"+std::to_string(changeCorFinal(bestCapture[1].mv_cor.to.X, bestCapture[0].mv_cor.to.Y));
-            board_makemove.Capture(bestCapture[0].mv_cor, board_makemove);
-            board_makemove.Capture(bestCapture[1].mv_cor, board_makemove);
+        for(int i=0;i<bestCapture.size();i++){
+            if(board_makemove.Capture(bestCapture[i].mv_cor, board_makemove)){
+                output_string = std::to_string(changeCorFinal(bestCapture[0].mv_cor.from.X, bestCapture[0].mv_cor.from.Y));
+                for(int i=0;i<bestCapture.size();i++){
+                    output_string += "x"+std::to_string(changeCorFinal(bestCapture[i].mv_cor.to.X, bestCapture[i].mv_cor.to.Y));
+                }
+            }
         }
-        
+
     } else{
         Move bestMove=findBestMove(board_makemove);
         //std::cout<<"best from"<<bestMove.mv_cor.front().X<<" "<<bestMove.mv_cor.front().Y<<"best to"<<bestMove.mv_cor.back().X<<" "<<bestMove.mv_cor.back().Y<<"best cap "<<bestMove.isCapture<<std::endl;
@@ -285,4 +250,15 @@ Move AI::generateRandomMove(Board board_rm, Color ai_col){
         }
     }
     return random_move;
+}
+std::vector<Move> AI::findLongestCapture(const std::vector<std::vector<Move>> &vector_from){
+    std::vector<Move> longest;
+    int max_size=0;
+    for(int i=0; i<vector_from.size();i++){
+        if(vector_from[i].size()>max_size){
+            longest=vector_from[i];
+            max_size=vector_from[i].size();
+        }
+    }
+    return longest;
 }
